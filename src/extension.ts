@@ -13,21 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
     'Congratulations, your extension "my-first-code-extension" is now active!'
   );
 
-  // prettier-ignore
-  const mdLinkRegex = new RegExp(
-  '\\['         + // Literal opening bracket
-    '('        + // Capture what we find in here
-      '[^\\]]+' + // One or more characters other than close bracket
-    ')'        + // Stop capturing
-  '\\]'         + // Literal closing bracket
-  '\\('         + // Literal opening parenthesis
-    '('        + // Capture what we find in here
-      '[^\\)]+'  + // One or more characters other than close parenthesis
-    ')'        + // Stop capturing
-  '\\)'        ); // Literal closing parenthesis
-
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
-    console.time();
     const targetFilesPromises = e.files.map(async (f) => {
       const oldTargetFilePath = path.normalize(f.oldUri.fsPath);
       const newTargetFilePath = path.normalize(f.newUri.fsPath);
@@ -81,7 +67,10 @@ export function activate(context: vscode.ExtensionContext) {
           }
         });
 
-        console.log("text after", modifedText);
+        if (text !== modifedText) {
+          console.log("Text is different for", mdFile.fsPath);
+          await fs.writeFile(mdFile.fsPath, modifedText, "utf8");
+        }
       });
 
       await Promise.all(promises);
@@ -92,7 +81,6 @@ export function activate(context: vscode.ExtensionContext) {
     await Promise.all(targetFilesPromises);
 
     console.log("Done");
-    console.timeEnd();
     // Object
     //   files:Array[1]
     //   0:Object
