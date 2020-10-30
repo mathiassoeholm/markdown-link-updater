@@ -6,7 +6,7 @@ import * as assert from "assert";
 // as well as import your extension to test it
 import * as vscode from "vscode";
 import { glob } from "glob";
-// import * as myExtension from '../../extension';
+import { waitFor } from "../wait-for";
 
 interface FileSystemDescription {
   [name: string]: string | FileSystemDescription;
@@ -24,11 +24,12 @@ async function generateFileSystem(node: string | FileSystemDescription) {
 async function verifyFileSystem(node: string | FileSystemDescription) {
   const paths = [...collectFilesRecursiveley(node)];
 
-  for (const { filePath, fileContent } of paths) {
-    assert.strictEqual(fileContent, await fse.readFile(filePath, "utf8"));
+  for (const { filePath, fileContent: expectedFileContent } of paths) {
+    const actualFileContent = await fse.readFile(filePath, "utf8");
+    if (expectedFileContent !== actualFileContent) {
+      assert.strictEqual(expectedFileContent, actualFileContent);
+    }
   }
-
-  console.log("paths", paths);
 
   await new Promise((resolve, reject) =>
     glob(tempTestFilesPath + "/**/*.*", (err, matches) => {
@@ -36,11 +37,13 @@ async function verifyFileSystem(node: string | FileSystemDescription) {
         reject(err);
       } else {
         matches.forEach((file) => {
-          console.log("Match", path.normalize(file));
-          assert.strictEqual(
-            true,
-            paths.some(({ filePath }) => filePath === path.normalize(file))
-          );
+          if (
+            !paths.some(({ filePath }) => filePath === path.normalize(file))
+          ) {
+            throw new Error(
+              `Found file ${file}, which was not part of the expected file system`
+            );
+          }
         });
         resolve();
       }
@@ -67,12 +70,14 @@ function* collectFilesRecursiveley(
 describe("Extension Test Suite", () => {
   vscode.window.showInformationMessage("Start all tests.");
 
-  // Copy test folders to temporary location
-  // Open temporary location
-  //
+  beforeEach(() => {
+    console.log("Removing");
+    fse.removeSync(tempTestFilesPath);
+  });
 
-  after(() => {
-    //fse.removeSync(tempTestFilesPath);
+  afterEach(() => {
+    console.log("Removing");
+    fse.removeSync(tempTestFilesPath);
   });
 
   it("Sample test", async () => {
@@ -103,11 +108,11 @@ describe("Extension Test Suite", () => {
       vscode.Uri.file(path.join(tempTestFilesPath, "folder/new-name.md"))
     );
 
-    console.log("Will edit");
     await vscode.workspace.applyEdit(edit);
-    console.log("Did edit");
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    await verifyFileSystem(expectedFileSystem);
+    await waitFor(() => verifyFileSystem(expectedFileSystem), {
+      interval: 500,
+      timeout: 5000,
+    });
   }).timeout(10000);
 });
