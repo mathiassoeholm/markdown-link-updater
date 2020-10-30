@@ -14,6 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
+    console.log("I was renamed");
     const targetFilesPromises = e.files.map(async (f) => {
       const oldTargetFilePath = path.normalize(f.oldUri.fsPath);
       const newTargetFilePath = path.normalize(f.newUri.fsPath);
@@ -28,9 +29,6 @@ export function activate(context: vscode.ExtensionContext) {
       // 2. Parse markdown files, and get links
       const promises = markdownFiles.map(async (mdFile) => {
         const text = await fs.readFile(mdFile.fsPath, "utf8");
-
-        let match: RegExpExecArray | null = null;
-        let index = 0;
 
         // prettier-ignore
         const mdLinkRegex = new RegExp(
