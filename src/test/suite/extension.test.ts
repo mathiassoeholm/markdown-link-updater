@@ -80,7 +80,7 @@ describe("Extension Test Suite", () => {
     fse.removeSync(tempTestFilesPath);
   });
 
-  it("Sample test", async () => {
+  it("updates files linking to the renamed file", async () => {
     const startFileSystem: FileSystemDescription = {
       ["file-1.md"]: `[link to file-2](./folder/file-2.md)`,
       ["folder"]: {
@@ -106,6 +106,40 @@ describe("Extension Test Suite", () => {
     edit.renameFile(
       vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-2.md")),
       vscode.Uri.file(path.join(tempTestFilesPath, "folder/new-name.md"))
+    );
+
+    await vscode.workspace.applyEdit(edit);
+
+    await waitFor(() => verifyFileSystem(expectedFileSystem), {
+      interval: 500,
+      timeout: 5000,
+    });
+  }).timeout(10000);
+
+  it("updates the renamed files own links when it is moved", async () => {
+    const startFileSystem: FileSystemDescription = {
+      ["file-1.md"]: `[link to file-2](file-2.md)`,
+      ["file-2.md"]: `# Just some markdown file`,
+    };
+
+    const expectedFileSystem = {
+      ["folder"]: {
+        ["file-1.md"]: `[link to file-2](../file-2.md)`,
+      },
+      ["file-2.md"]: `# Just some markdown file`,
+    };
+
+    await generateFileSystem(startFileSystem);
+    await vscode.commands.executeCommand(
+      "vscode.openFolder",
+      vscode.Uri.file(tempTestFilesPath)
+    );
+
+    const edit = new vscode.WorkspaceEdit();
+
+    edit.renameFile(
+      vscode.Uri.file(path.join(tempTestFilesPath, "file-1.md")),
+      vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-1.md"))
     );
 
     await vscode.workspace.applyEdit(edit);
