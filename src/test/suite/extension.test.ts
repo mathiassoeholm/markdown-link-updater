@@ -88,6 +88,12 @@ describe("Extension Test Suite", () => {
       },
     };
 
+    const edit = new vscode.WorkspaceEdit();
+    edit.renameFile(
+      vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-2.md")),
+      vscode.Uri.file(path.join(tempTestFilesPath, "folder/new-name.md"))
+    );
+
     const expectedFileSystem = {
       ["file-1.md"]: `[link to file-2](folder/new-name.md)`,
       ["folder"]: {
@@ -99,13 +105,6 @@ describe("Extension Test Suite", () => {
     await vscode.commands.executeCommand(
       "vscode.openFolder",
       vscode.Uri.file(tempTestFilesPath)
-    );
-
-    const edit = new vscode.WorkspaceEdit();
-
-    edit.renameFile(
-      vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-2.md")),
-      vscode.Uri.file(path.join(tempTestFilesPath, "folder/new-name.md"))
     );
 
     await vscode.workspace.applyEdit(edit);
@@ -122,6 +121,12 @@ describe("Extension Test Suite", () => {
       ["file-2.md"]: `# Just some markdown file`,
     };
 
+    const edit = new vscode.WorkspaceEdit();
+    edit.renameFile(
+      vscode.Uri.file(path.join(tempTestFilesPath, "file-1.md")),
+      vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-1.md"))
+    );
+
     const expectedFileSystem = {
       ["folder"]: {
         ["file-1.md"]: `[link to file-2](../file-2.md)`,
@@ -133,13 +138,6 @@ describe("Extension Test Suite", () => {
     await vscode.commands.executeCommand(
       "vscode.openFolder",
       vscode.Uri.file(tempTestFilesPath)
-    );
-
-    const edit = new vscode.WorkspaceEdit();
-
-    edit.renameFile(
-      vscode.Uri.file(path.join(tempTestFilesPath, "file-1.md")),
-      vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-1.md"))
     );
 
     await vscode.workspace.applyEdit(edit);
