@@ -67,6 +67,38 @@ function* collectFilesRecursiveley(
   }
 }
 
+interface TestConfig {
+  title: string;
+  startFileSystem: FileSystemDescription;
+  renames: Array<{ from: string; to: string }>;
+  expectedEndFileSystem: FileSystemDescription;
+}
+
+const test = (config: TestConfig) => {
+  it(config.title, async () => {
+    const edit = new vscode.WorkspaceEdit();
+    config.renames.forEach(({ from, to }) => {
+      edit.renameFile(
+        vscode.Uri.file(path.join(tempTestFilesPath, from)),
+        vscode.Uri.file(path.join(tempTestFilesPath, to))
+      );
+    });
+
+    await generateFileSystem(config.startFileSystem);
+    await vscode.commands.executeCommand(
+      "vscode.openFolder",
+      vscode.Uri.file(tempTestFilesPath)
+    );
+
+    await vscode.workspace.applyEdit(edit);
+
+    await waitFor(() => verifyFileSystem(config.expectedEndFileSystem), {
+      interval: 500,
+      timeout: 5000,
+    });
+  }).timeout(10000);
+};
+
 describe("Extension Test Suite", () => {
   vscode.window.showInformationMessage("Start all tests.");
 
@@ -78,114 +110,56 @@ describe("Extension Test Suite", () => {
     fse.removeSync(tempTestFilesPath);
   });
 
-  it("updates files linking to the renamed file", async () => {
-    const startFileSystem: FileSystemDescription = {
+  test({
+    title: "updates files linking to the renamed file",
+    startFileSystem: {
       ["file-1.md"]: `[link to file-2](./folder/file-2.md)`,
       ["folder"]: {
         ["file-2.md"]: `# Just some markdown file`,
       },
-    };
-
-    const edit = new vscode.WorkspaceEdit();
-    edit.renameFile(
-      vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-2.md")),
-      vscode.Uri.file(path.join(tempTestFilesPath, "folder/new-name.md"))
-    );
-
-    const expectedFileSystem = {
+    },
+    renames: [{ from: "folder/file-2.md", to: "folder/new-name.md" }],
+    expectedEndFileSystem: {
       ["file-1.md"]: `[link to file-2](folder/new-name.md)`,
       ["folder"]: {
         ["new-name.md"]: `# Just some markdown file`,
       },
-    };
+    },
+  });
 
-    await generateFileSystem(startFileSystem);
-    await vscode.commands.executeCommand(
-      "vscode.openFolder",
-      vscode.Uri.file(tempTestFilesPath)
-    );
-
-    await vscode.workspace.applyEdit(edit);
-
-    await waitFor(() => verifyFileSystem(expectedFileSystem), {
-      interval: 500,
-      timeout: 5000,
-    });
-  }).timeout(10000);
-
-  it("updates the renamed files own links when it is moved", async () => {
-    const startFileSystem: FileSystemDescription = {
+  test({
+    title: "updates the renamed files own links when it is moved",
+    startFileSystem: {
       ["file-1.md"]: `[link to file-2](file-2.md)\n[link to a website](http://www.example.com)`,
       ["file-2.md"]: `# Just some markdown file`,
-    };
-
-    const edit = new vscode.WorkspaceEdit();
-    edit.renameFile(
-      vscode.Uri.file(path.join(tempTestFilesPath, "file-1.md")),
-      vscode.Uri.file(path.join(tempTestFilesPath, "folder/file-1.md"))
-    );
-
-    const expectedFileSystem = {
+    },
+    renames: [{ from: "file-1.md", to: "folder/file-1.md" }],
+    expectedEndFileSystem: {
       ["folder"]: {
         ["file-1.md"]: `[link to file-2](../file-2.md)\n[link to a website](http://www.example.com)`,
       },
       ["file-2.md"]: `# Just some markdown file`,
-    };
+    },
+  });
 
-    await generateFileSystem(startFileSystem);
-    await vscode.commands.executeCommand(
-      "vscode.openFolder",
-      vscode.Uri.file(tempTestFilesPath)
-    );
-
-    await vscode.workspace.applyEdit(edit);
-
-    await waitFor(() => verifyFileSystem(expectedFileSystem), {
-      interval: 500,
-      timeout: 5000,
-    });
-  }).timeout(10000);
-
-  it("can update multiple links in the same file", async () => {
-    const startFileSystem: FileSystemDescription = {
+  test({
+    title: "can update multiple links in the same file",
+    startFileSystem: {
       ["links.md"]: `[a](old-a.txt)\n[b](old-b.txt)\n[c](old-c.txt)`,
       ["old-a.txt"]: `a`,
       ["old-b.txt"]: `b`,
       ["old-c.txt"]: `c`,
-    };
-
-    const edit = new vscode.WorkspaceEdit();
-    edit.renameFile(
-      vscode.Uri.file(path.join(tempTestFilesPath, "old-a.txt")),
-      vscode.Uri.file(path.join(tempTestFilesPath, "new-a.txt"))
-    );
-    edit.renameFile(
-      vscode.Uri.file(path.join(tempTestFilesPath, "old-b.txt")),
-      vscode.Uri.file(path.join(tempTestFilesPath, "new-b.txt"))
-    );
-    edit.renameFile(
-      vscode.Uri.file(path.join(tempTestFilesPath, "old-c.txt")),
-      vscode.Uri.file(path.join(tempTestFilesPath, "new-c.txt"))
-    );
-
-    const expectedFileSystem = {
+    },
+    renames: [
+      { from: "old-a.txt", to: "new-a.txt" },
+      { from: "old-b.txt", to: "new-b.txt" },
+      { from: "old-c.txt", to: "new-c.txt" },
+    ],
+    expectedEndFileSystem: {
       ["links.md"]: `[a](new-a.txt)\n[b](new-b.txt)\n[c](new-c.txt)`,
       ["new-a.txt"]: `a`,
       ["new-b.txt"]: `b`,
       ["new-c.txt"]: `c`,
-    };
-
-    await generateFileSystem(startFileSystem);
-    await vscode.commands.executeCommand(
-      "vscode.openFolder",
-      vscode.Uri.file(tempTestFilesPath)
-    );
-
-    await vscode.workspace.applyEdit(edit);
-
-    await waitFor(() => verifyFileSystem(expectedFileSystem), {
-      interval: 500,
-      timeout: 5000,
-    });
-  }).timeout(10000);
+    },
+  });
 });
