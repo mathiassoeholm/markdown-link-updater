@@ -145,4 +145,47 @@ describe("Extension Test Suite", () => {
       timeout: 5000,
     });
   }).timeout(10000);
+
+  it("can update multiple links in the same file", async () => {
+    const startFileSystem: FileSystemDescription = {
+      ["links.md"]: `[a](old-a.txt)\n[b](old-b.txt)\n[c](old-c.txt)`,
+      ["old-a.txt"]: `a`,
+      ["old-b.txt"]: `b`,
+      ["old-c.txt"]: `c`,
+    };
+
+    const edit = new vscode.WorkspaceEdit();
+    edit.renameFile(
+      vscode.Uri.file(path.join(tempTestFilesPath, "old-a.txt")),
+      vscode.Uri.file(path.join(tempTestFilesPath, "new-a.txt"))
+    );
+    edit.renameFile(
+      vscode.Uri.file(path.join(tempTestFilesPath, "old-b.txt")),
+      vscode.Uri.file(path.join(tempTestFilesPath, "new-b.txt"))
+    );
+    edit.renameFile(
+      vscode.Uri.file(path.join(tempTestFilesPath, "old-c.txt")),
+      vscode.Uri.file(path.join(tempTestFilesPath, "new-c.txt"))
+    );
+
+    const expectedFileSystem = {
+      ["links.md"]: `[a](new-a.txt)\n[b](new-b.txt)\n[c](new-c.txt)`,
+      ["new-a.txt"]: `a`,
+      ["new-b.txt"]: `b`,
+      ["new-c.txt"]: `c`,
+    };
+
+    await generateFileSystem(startFileSystem);
+    await vscode.commands.executeCommand(
+      "vscode.openFolder",
+      vscode.Uri.file(tempTestFilesPath)
+    );
+
+    await vscode.workspace.applyEdit(edit);
+
+    await waitFor(() => verifyFileSystem(expectedFileSystem), {
+      interval: 500,
+      timeout: 5000,
+    });
+  }).timeout(10000);
 });
