@@ -71,12 +71,10 @@ describe("Extension Test Suite", () => {
   vscode.window.showInformationMessage("Start all tests.");
 
   beforeEach(() => {
-    console.log("Removing");
     fse.removeSync(tempTestFilesPath);
   });
 
   afterEach(() => {
-    console.log("Removing");
     fse.removeSync(tempTestFilesPath);
   });
 
@@ -117,7 +115,7 @@ describe("Extension Test Suite", () => {
 
   it("updates the renamed files own links when it is moved", async () => {
     const startFileSystem: FileSystemDescription = {
-      ["file-1.md"]: `[link to file-2](file-2.md)`,
+      ["file-1.md"]: `[link to file-2](file-2.md)\n[link to a website](http://www.example.com)`,
       ["file-2.md"]: `# Just some markdown file`,
     };
 
@@ -129,7 +127,7 @@ describe("Extension Test Suite", () => {
 
     const expectedFileSystem = {
       ["folder"]: {
-        ["file-1.md"]: `[link to file-2](../file-2.md)`,
+        ["file-1.md"]: `[link to file-2](../file-2.md)\n[link to a website](http://www.example.com)`,
       },
       ["file-2.md"]: `# Just some markdown file`,
     };

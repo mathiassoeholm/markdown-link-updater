@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { promises as fs } from "fs";
+import * as fse from "fs-extra";
 import * as path from "path";
 
 // prettier-ignore
@@ -15,22 +16,50 @@ const mdLinkRegex = new RegExp(
     '('         + // Capture what we find in here
       '[^\\)]+' + // One or more characters other than close parenthesis
     ')'         + // Stop capturing
-  '\\)'        ); // Literal closing parenthesis
+  '\\)',          // Literal closing parenthesis
+  'g');
 
 export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
-    console.log("I was renamed");
+    const processRenamedFiles = e.files.map(async (renamedFile) => {
+      const newFilePath = renamedFile.newUri.fsPath;
+      const text = await fs.readFile(newFilePath, "utf8");
+
+      console.log("text", text);
+      const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
+        const absoluteLinkPath = path.join(
+          path.dirname(renamedFile.oldUri.fsPath),
+          g2
+        );
+        console.log("absoluteLinkPath", absoluteLinkPath);
+        const linkedResourceExists = fse.pathExistsSync(absoluteLinkPath);
+        console.log("linkedResourceExists", linkedResourceExists);
+
+        if (linkedResourceExists) {
+          const newLink = path.normalize(
+            path.relative(path.dirname(newFilePath), absoluteLinkPath)
+          );
+          return `[${g1}](${newLink})`;
+        } else {
+          return match;
+        }
+      });
+      console.log("modifedText", modifedText);
+
+      if (text !== modifedText) {
+        await fs.writeFile(newFilePath, modifedText, "utf8");
+      }
+    });
+
     const targetFilesPromises = e.files.map(async (f) => {
       const oldTargetFilePath = path.normalize(f.oldUri.fsPath);
       const newTargetFilePath = path.normalize(f.newUri.fsPath);
 
-      // 1. Find all markdown files
       const markdownFiles = await vscode.workspace.findFiles(
         "**/*.md",
         "**/node_modules/**"
       );
 
-      // 2. Parse markdown files, and get links
       const promises = markdownFiles.map(async (mdFile) => {
         const text = await fs.readFile(mdFile.fsPath, "utf8");
 
@@ -56,11 +85,9 @@ export function activate(context: vscode.ExtensionContext) {
       });
 
       await Promise.all(promises);
-
-      // 3. Update links if it links to this file
     });
 
-    await Promise.all(targetFilesPromises);
+    await Promise.all([...targetFilesPromises, ...processRenamedFiles]);
   });
 
   context.subscriptions.push(disposable);
