@@ -31,9 +31,8 @@ export function activate(context: vscode.ExtensionContext) {
           path.dirname(renamedFile.oldUri.fsPath),
           g2
         );
-        console.log("absoluteLinkPath", absoluteLinkPath);
+
         const linkedResourceExists = fse.pathExistsSync(absoluteLinkPath);
-        console.log("linkedResourceExists", linkedResourceExists);
 
         if (linkedResourceExists) {
           const newLink = path.normalize(

@@ -162,4 +162,31 @@ describe("Extension Test Suite", () => {
       ["new-c.txt"]: `c`,
     },
   });
+
+  test({
+    title: "ignores node_modules",
+    startFileSystem: {
+      ["node_modules"]: {
+        ["file-1.md"]: "[link to file-2](file-2.md)",
+        ["file-2.md"]: "# Just some markdown file",
+        ["file-3.md"]: "[link to file-1](file-1.md)",
+      },
+    },
+    renames: [
+      { from: "node_modules/file-2.md", to: "node_modules/file-2-changed.md" },
+      {
+        from: "node_modules/file-3.md",
+        to: "node_modules/subfolder/file-3.md",
+      },
+    ],
+    expectedEndFileSystem: {
+      ["node_modules"]: {
+        ["file-1.md"]: "[link to file-2](file-2.md)",
+        ["file-2-changed.md"]: "# Just some markdown file",
+        ["subfolder"]: {
+          ["file-3.md"]: "[link to file-1](file-1.md)",
+        },
+      },
+    },
+  });
 });
