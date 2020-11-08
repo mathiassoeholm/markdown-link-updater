@@ -27,7 +27,7 @@ async function verifyFileSystem(node: string | FileSystemDescription) {
   for (const { filePath, fileContent: expectedFileContent } of paths) {
     const actualFileContent = await fse.readFile(filePath, "utf8");
     if (expectedFileContent !== actualFileContent) {
-      assert.strictEqual(expectedFileContent, actualFileContent);
+      assert.strictEqual(actualFileContent, expectedFileContent);
     }
   }
 

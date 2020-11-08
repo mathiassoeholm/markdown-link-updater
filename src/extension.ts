@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { promises as fs } from "fs";
 import * as fse from "fs-extra";
 import * as path from "path";
+import { glob } from "glob";
 
 // prettier-ignore
 const mdLinkRegex = new RegExp(
@@ -21,34 +22,34 @@ const mdLinkRegex = new RegExp(
 
 export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
-    const processRenamedFiles = e.files.map(async (renamedFile) => {
-      const newFilePath = renamedFile.newUri.fsPath;
-      const text = await fs.readFile(newFilePath, "utf8");
+    const processRenamedFiles = e.files
+      .filter((f) => !f.oldUri.fsPath.match(/[\\/]node_modules[\\/]/))
+      .map(async (renamedFile) => {
+        const newFilePath = renamedFile.newUri.fsPath;
+        const text = await fs.readFile(newFilePath, "utf8");
 
-      console.log("text", text);
-      const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
-        const absoluteLinkPath = path.join(
-          path.dirname(renamedFile.oldUri.fsPath),
-          g2
-        );
-
-        const linkedResourceExists = fse.pathExistsSync(absoluteLinkPath);
-
-        if (linkedResourceExists) {
-          const newLink = path.normalize(
-            path.relative(path.dirname(newFilePath), absoluteLinkPath)
+        const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
+          const absoluteLinkPath = path.join(
+            path.dirname(renamedFile.oldUri.fsPath),
+            g2
           );
-          return `[${g1}](${newLink})`;
-        } else {
-          return match;
+
+          const linkedResourceExists = fse.pathExistsSync(absoluteLinkPath);
+
+          if (linkedResourceExists) {
+            const newLink = path.normalize(
+              path.relative(path.dirname(newFilePath), absoluteLinkPath)
+            );
+            return `[${g1}](${newLink})`;
+          } else {
+            return match;
+          }
+        });
+
+        if (text !== modifedText) {
+          await fs.writeFile(newFilePath, modifedText, "utf8");
         }
       });
-      console.log("modifedText", modifedText);
-
-      if (text !== modifedText) {
-        await fs.writeFile(newFilePath, modifedText, "utf8");
-      }
-    });
 
     const targetFilesPromises = e.files.map(async (f) => {
       const oldTargetFilePath = path.normalize(f.oldUri.fsPath);
