@@ -10,7 +10,7 @@ import { exec } from "child_process";
 const mdLinkRegex = new RegExp(
   '\\['         + // Literal opening bracket
     '('         + // Capture what we find in here
-      '[^\\]]+' + // One or more characters other than close bracket
+      '[^\\]]*' + // Any other characters than close bracket
     ')'         + // Stop capturing
   '\\]'         + // Literal closing bracket
   '\\('         + // Literal opening parenthesis
@@ -25,6 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
     const processRenamedFiles = e.files
       .filter((f) => !f.oldUri.fsPath.match(/[\\/]node_modules[\\/]/))
       .map(async (renamedFile) => {
+        console.log("Renamed", renamedFile.oldUri.fsPath);
         if (await fileIsIgnoredByGit(renamedFile.oldUri.fsPath)) {
           return;
         }

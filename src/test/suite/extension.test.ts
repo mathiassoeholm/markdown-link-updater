@@ -204,3 +204,6 @@ describe("Extension Test Suite", () => {
     },
   });
 });
+
+// Need test case for []()
+// Need test case for folder rename
