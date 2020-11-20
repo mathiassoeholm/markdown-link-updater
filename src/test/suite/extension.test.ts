@@ -203,7 +203,19 @@ describe("Extension Test Suite", () => {
       },
     },
   });
+
+  test({
+    title: "updates links with empty text",
+    startFileSystem: {
+      ["file-1.md"]: `![](an-image.svg)`,
+      ["an-image.svg"]: `<svg />`,
+    },
+    renames: [{ from: "an-image.svg", to: "an-image-changed.svg" }],
+    expectedEndFileSystem: {
+      ["file-1.md"]: `![](an-image-changed.svg)`,
+      ["an-image-changed.svg"]: `<svg />`,
+    },
+  });
 });
 
-// Need test case for []()
 // Need test case for folder rename
