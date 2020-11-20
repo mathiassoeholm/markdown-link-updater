@@ -3,3 +3,4 @@ node_modules
 .vscode-test/
 *.vsix
 /temp-test-files
+yarn-error.log

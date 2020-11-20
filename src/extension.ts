@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { promises as fs } from "fs";
 import * as fse from "fs-extra";
 import * as path from "path";
-import { glob } from "glob";
+import { exec } from "child_process";
 
 // prettier-ignore
 const mdLinkRegex = new RegExp(
@@ -25,6 +25,10 @@ export function activate(context: vscode.ExtensionContext) {
     const processRenamedFiles = e.files
       .filter((f) => !f.oldUri.fsPath.match(/[\\/]node_modules[\\/]/))
       .map(async (renamedFile) => {
+        if (await fileIsIgnoredByGit(renamedFile.oldUri.fsPath)) {
+          return;
+        }
+
         const newFilePath = renamedFile.newUri.fsPath;
         const text = await fs.readFile(newFilePath, "utf8");
 
@@ -61,6 +65,10 @@ export function activate(context: vscode.ExtensionContext) {
       );
 
       const promises = markdownFiles.map(async (mdFile) => {
+        if (await fileIsIgnoredByGit(mdFile.fsPath)) {
+          return;
+        }
+
         const text = await fs.readFile(mdFile.fsPath, "utf8");
 
         const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
@@ -95,3 +103,21 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
+
+const fileIsIgnoredByGit = async (file: string) => {
+  const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
+  const useGitIgnore = config.get("useGitIgnore", true);
+
+  if (!useGitIgnore) {
+    return false;
+  }
+
+  return await new Promise((resolve) => {
+    const process = exec(
+      `cd ${path.dirname(file)} && git check-ignore ${file}`,
+      () => {
+        resolve(process.exitCode === 0);
+      }
+    );
+  });
+};
