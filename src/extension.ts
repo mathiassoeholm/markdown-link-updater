@@ -33,7 +33,10 @@ export function activate(context: vscode.ExtensionContext) {
         ).isDirectory();
         if (isDirectory) {
           await new Promise((resolve, reject) => {
-            glob(renamedFileOrDir.newUri.fsPath + "/**/*.*", (err, matches) => {
+            glob(
+              renamedFileOrDir.newUri.fsPath + "/**/*.*",
+              { nodir: true },
+              (err, matches) => {
               if (err) {
                 reject(err);
               } else {

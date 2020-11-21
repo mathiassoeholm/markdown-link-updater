@@ -29,7 +29,7 @@ async function verifyFileSystem(node: string | FileSystemDescription) {
   }
 
   await new Promise((resolve, reject) =>
-    glob(tempTestFilesPath + "/**/*.*", (err, matches) => {
+    glob(tempTestFilesPath + "/**/*.*", { nodir: true }, (err, matches) => {
       if (err) {
         reject(err);
       } else {
@@ -239,6 +239,27 @@ describe("Extension Test Suite", () => {
         ["2.txt"]: "file 2",
         ["sub"]: {
           ["3.txt"]: "file 3",
+        },
+      },
+    },
+  });
+
+  test({
+    title: "can handle folders with names that look like files",
+    startFileSystem: {
+      ["file-1.md"]: "[hello](folder.txt/subfolder.txt/hello.txt)",
+      ["folder.txt"]: {
+        ["subfolder.txt"]: {
+          "hello.txt": "hello",
+        },
+      },
+    },
+    renames: [{ from: "folder.txt", to: "folder-changed.txt" }],
+    expectedEndFileSystem: {
+      ["file-1.md"]: "[hello](folder-changed.txt/subfolder.txt/hello.txt)",
+      ["folder-changed.txt"]: {
+        ["subfolder.txt"]: {
+          "hello.txt": "hello",
         },
       },
     },
