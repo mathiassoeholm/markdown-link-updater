@@ -3,6 +3,10 @@ interface WaitForOptions {
   interval?: number;
 }
 
+/**
+ * A simpler version of https://testing-library.com/docs/dom-testing-library/api-async/#waitfor
+ * TODO: Consider moving this into a separate node_module as it's quite useful in general.
+ */
 export async function waitFor(
   callback: () => Promise<void>,
   { timeout = 5000, interval = 50 }: WaitForOptions

@@ -1,5 +1,3 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { promises as fs } from "fs";
 import * as fse from "fs-extra";
@@ -25,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
     const renamedFiles: { oldPath: string; newPath: string }[] = [];
 
-    const collectAllFiles = e.files
+    const collectFilesPromises = e.files
       .filter((f) => !f.oldUri.fsPath.match(/[\\/]node_modules[\\/]/))
       .map(async (renamedFileOrDir) => {
         const isDirectory = (
@@ -69,9 +67,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
       });
 
-    await Promise.all(collectAllFiles);
+    await Promise.all(collectFilesPromises);
 
-    const processRenamedFiles = renamedFiles.map(async (renamedFile) => {
+    const renamedFilePromises = renamedFiles.map(async (renamedFile) => {
       if (await fileIsIgnoredByGit(renamedFile.oldPath)) {
         return;
       }
@@ -139,14 +137,11 @@ export function activate(context: vscode.ExtensionContext) {
       }
     });
 
-    await Promise.all([...markdownFilePromises, ...processRenamedFiles]);
+    await Promise.all([...markdownFilePromises, ...renamedFilePromises]);
   });
 
   context.subscriptions.push(disposable);
 }
-
-// this method is called when your extension is deactivated
-export function deactivate() {}
 
 const fileIsIgnoredByGit = async (file: string) => {
   const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
