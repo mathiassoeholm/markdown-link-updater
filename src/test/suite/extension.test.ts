@@ -216,6 +216,31 @@ describe("Extension Test Suite", () => {
       ["an-image-changed.svg"]: `<svg />`,
     },
   });
-});
 
-// Need test case for folder rename
+  test({
+    title: "works when renaming folders",
+    startFileSystem: {
+      ["file-1.md"]:
+        "[link-1](before/1.txt)\n[link-2](before/2.txt)\n[link-3](before/sub/3.txt)",
+      ["before"]: {
+        ["1.txt"]: "file 1",
+        ["2.txt"]: "file 2",
+        ["sub"]: {
+          ["3.txt"]: "file 3",
+        },
+      },
+    },
+    renames: [{ from: "before", to: "after" }],
+    expectedEndFileSystem: {
+      ["file-1.md"]:
+        "[link-1](after/1.txt)\n[link-2](after/2.txt)\n[link-3](after/sub/3.txt)",
+      ["after"]: {
+        ["1.txt"]: "file 1",
+        ["2.txt"]: "file 2",
+        ["sub"]: {
+          ["3.txt"]: "file 3",
+        },
+      },
+    },
+  });
+});

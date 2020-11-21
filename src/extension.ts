@@ -5,6 +5,7 @@ import { promises as fs } from "fs";
 import * as fse from "fs-extra";
 import * as path from "path";
 import { exec } from "child_process";
+import { glob } from "glob";
 
 // prettier-ignore
 const mdLinkRegex = new RegExp(
@@ -22,81 +23,121 @@ const mdLinkRegex = new RegExp(
 
 export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
-    const processRenamedFiles = e.files
+    const renamedFiles: { oldPath: string; newPath: string }[] = [];
+
+    const collectAllFiles = e.files
       .filter((f) => !f.oldUri.fsPath.match(/[\\/]node_modules[\\/]/))
-      .map(async (renamedFile) => {
-        console.log("Renamed", renamedFile.oldUri.fsPath);
-        if (await fileIsIgnoredByGit(renamedFile.oldUri.fsPath)) {
-          return;
-        }
+      .map(async (renamedFileOrDir) => {
+        const isDirectory = (
+          await fs.lstat(renamedFileOrDir.newUri.fsPath)
+        ).isDirectory();
+        if (isDirectory) {
+          await new Promise((resolve, reject) => {
+            glob(renamedFileOrDir.newUri.fsPath + "/**/*.*", (err, matches) => {
+              if (err) {
+                reject(err);
+              } else {
+                matches.forEach((match) => {
+                  const relative = path.relative(
+                    renamedFileOrDir.newUri.fsPath,
+                    match
+                  );
+                  const oldPath = path.join(
+                    renamedFileOrDir.oldUri.fsPath,
+                    relative
+                  );
 
-        const newFilePath = renamedFile.newUri.fsPath;
-        const text = await fs.readFile(newFilePath, "utf8");
+                  renamedFiles.push({
+                    oldPath: path.normalize(oldPath),
+                    newPath: path.normalize(match),
+                  });
+                });
 
-        const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
-          const absoluteLinkPath = path.join(
-            path.dirname(renamedFile.oldUri.fsPath),
-            g2
-          );
-
-          const linkedResourceExists = fse.pathExistsSync(absoluteLinkPath);
-
-          if (linkedResourceExists) {
-            const newLink = path.normalize(
-              path.relative(path.dirname(newFilePath), absoluteLinkPath)
-            );
-            return `[${g1}](${newLink})`;
-          } else {
-            return match;
-          }
-        });
-
-        if (text !== modifedText) {
-          await fs.writeFile(newFilePath, modifedText, "utf8");
+                resolve();
+              }
+            });
+          });
+        } else {
+          renamedFiles.push({
+            oldPath: path.normalize(renamedFileOrDir.oldUri.fsPath),
+            newPath: path.normalize(renamedFileOrDir.newUri.fsPath),
+          });
         }
       });
 
-    const targetFilesPromises = e.files.map(async (f) => {
-      const oldTargetFilePath = path.normalize(f.oldUri.fsPath);
-      const newTargetFilePath = path.normalize(f.newUri.fsPath);
+    await Promise.all(collectAllFiles);
 
-      const markdownFiles = await vscode.workspace.findFiles(
-        "**/*.md",
-        "**/node_modules/**"
-      );
+    const processRenamedFiles = renamedFiles.map(async (renamedFile) => {
+      console.log("Renamed", renamedFile.oldPath);
+      console.log("New path", renamedFile.newPath);
+      if (await fileIsIgnoredByGit(renamedFile.oldPath)) {
+        return;
+      }
 
-      const promises = markdownFiles.map(async (mdFile) => {
-        if (await fileIsIgnoredByGit(mdFile.fsPath)) {
-          return;
+      const newFilePath = renamedFile.newPath;
+      const text = await fs.readFile(newFilePath, "utf8");
+
+      const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
+        const absoluteLinkPath = path.join(
+          path.dirname(renamedFile.oldPath),
+          g2
+        );
+
+        const linkedResourceExists = fse.pathExistsSync(absoluteLinkPath);
+
+        if (linkedResourceExists) {
+          const newLink = path.normalize(
+            path.relative(path.dirname(newFilePath), absoluteLinkPath)
+          );
+          return `[${g1}](${newLink})`;
+        } else {
+          return match;
         }
+      });
 
-        const text = await fs.readFile(mdFile.fsPath, "utf8");
+      if (text !== modifedText) {
+        await fs.writeFile(newFilePath, modifedText, "utf8");
+      }
+    });
 
-        const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
+    const markdownFiles = await vscode.workspace.findFiles(
+      "**/*.md",
+      "**/node_modules/**"
+    );
+
+    const markdownFilePromises = markdownFiles.map(async (mdFile) => {
+      if (await fileIsIgnoredByGit(mdFile.fsPath)) {
+        return;
+      }
+
+      const text = await fs.readFile(mdFile.fsPath, "utf8");
+
+      const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
+        for (const { oldPath, newPath } of renamedFiles) {
           const isLinkToMovedFile =
             path.normalize(path.join(path.dirname(mdFile.fsPath), g2)) ===
-            oldTargetFilePath;
+            oldPath;
 
           if (isLinkToMovedFile) {
             const newLink = path.normalize(
-              path.relative(path.dirname(mdFile.fsPath), newTargetFilePath)
+              path.relative(path.dirname(mdFile.fsPath), newPath)
             );
 
             return `[${g1}](${newLink})`;
           } else {
-            return match;
+            continue;
           }
-        });
-
-        if (text !== modifedText) {
-          await fs.writeFile(mdFile.fsPath, modifedText, "utf8");
         }
+
+        return match;
       });
 
-      await Promise.all(promises);
+      if (text !== modifedText) {
+        await fs.writeFile(mdFile.fsPath, modifedText, "utf8");
+      }
     });
 
-    await Promise.all([...targetFilesPromises, ...processRenamedFiles]);
+    await Promise.all([...markdownFilePromises, ...processRenamedFiles]);
   });
 
   context.subscriptions.push(disposable);
