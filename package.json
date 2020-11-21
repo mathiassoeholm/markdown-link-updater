@@ -1,8 +1,15 @@
 {
   "name": "markdown-link-updater",
   "displayName": "Markdown Link Updater",
+  "author": {
+    "name": "Mathias Soeholm"
+  },
   "description": "Automatically updates links in markdown files when moving or renaming files in the workspace.",
+  "repository": {
+    "url": "https://github.com/mathiassoeholm/markdown-link-updater"
+  },
   "version": "1.0.0",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.50.0"
   },
