@@ -37,28 +37,29 @@ export function activate(context: vscode.ExtensionContext) {
               renamedFileOrDir.newUri.fsPath + "/**/*.*",
               { nodir: true },
               (err, matches) => {
-              if (err) {
-                reject(err);
-              } else {
-                matches.forEach((match) => {
-                  const relative = path.relative(
-                    renamedFileOrDir.newUri.fsPath,
-                    match
-                  );
-                  const oldPath = path.join(
-                    renamedFileOrDir.oldUri.fsPath,
-                    relative
-                  );
+                if (err) {
+                  reject(err);
+                } else {
+                  matches.forEach((match) => {
+                    const relative = path.relative(
+                      renamedFileOrDir.newUri.fsPath,
+                      match
+                    );
+                    const oldPath = path.join(
+                      renamedFileOrDir.oldUri.fsPath,
+                      relative
+                    );
 
-                  renamedFiles.push({
-                    oldPath: path.normalize(oldPath),
-                    newPath: path.normalize(match),
+                    renamedFiles.push({
+                      oldPath: path.normalize(oldPath),
+                      newPath: path.normalize(match),
+                    });
                   });
-                });
 
-                resolve();
+                  resolve();
+                }
               }
-            });
+            );
           });
         } else {
           renamedFiles.push({
@@ -71,8 +72,6 @@ export function activate(context: vscode.ExtensionContext) {
     await Promise.all(collectAllFiles);
 
     const processRenamedFiles = renamedFiles.map(async (renamedFile) => {
-      console.log("Renamed", renamedFile.oldPath);
-      console.log("New path", renamedFile.newPath);
       if (await fileIsIgnoredByGit(renamedFile.oldPath)) {
         return;
       }
@@ -151,7 +150,7 @@ export function deactivate() {}
 
 const fileIsIgnoredByGit = async (file: string) => {
   const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
-  const useGitIgnore = config.get("useGitIgnore", true);
+  const useGitIgnore = config.get("slowUseGitIgnore", false);
 
   if (!useGitIgnore) {
     return false;

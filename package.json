@@ -16,10 +16,10 @@
     "configuration": {
       "title": "Markdown Link Updater",
       "properties": {
-        "markdownLinkUpdater.useGitIgnore": {
+        "markdownLinkUpdater.slowUseGitIgnore": {
           "type": "boolean",
-          "default": true,
-          "description": "Ignore files that are ignored by git."
+          "default": false,
+          "description": "Skip files that are ignored by git. This can be SLOW on large projects, so it is encouraged to active it on a per project basis."
         }
       }
     }

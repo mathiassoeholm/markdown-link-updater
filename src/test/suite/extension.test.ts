@@ -97,30 +97,11 @@ const test = (config: TestConfig) => {
 };
 
 describe("Extension Test Suite", () => {
-  vscode.window.showInformationMessage("Start all tests.");
-  let originalGetConfiguration: typeof vscode.workspace.getConfiguration;
-
   beforeEach(() => {
-    // Mock getConfiguration so useGitIgnore will end up being false
-    originalGetConfiguration = vscode.workspace.getConfiguration;
-    vscode.workspace.getConfiguration = (section, ...restArgs) => {
-      if (section === "markdownLinkUpdater") {
-        return {
-          get() {
-            // useGitIgnore will be false
-            return false;
-          },
-        } as any;
-      } else {
-        return originalGetConfiguration(section, ...restArgs);
-      }
-    };
-
     fse.removeSync(tempTestFilesPath);
   });
 
   afterEach(() => {
-    vscode.workspace.getConfiguration = originalGetConfiguration;
     fse.removeSync(tempTestFilesPath);
   });
 

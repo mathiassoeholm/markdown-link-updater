@@ -10,7 +10,7 @@ Updates Markdown links automatically, when files in the workspace are moved or r
 
 This extension contributes the following settings:
 
-- `markdownLinkUpdater.useGitIgnore`: Ignore files that are ignored by Git. Default value is true.
+- `markdownLinkUpdater.slowUseGitIgnore`: Skip files that are ignored by git. This can be SLOW on large projects, so it is encouraged to active it on a per project basis. Default value is false.
 
 ## Release Notes
 
