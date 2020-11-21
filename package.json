@@ -1,8 +1,8 @@
 {
-  "name": "my-first-code-extension",
-  "displayName": "my-first-code-extension",
-  "description": "This is my first extension for Visual Studio Code",
-  "version": "0.0.1",
+  "name": "markdown-link-updater",
+  "displayName": "Markdown Link Updater",
+  "description": "Automatically updates links in markdown files when moving or renaming files in the workspace.",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.50.0"
   },
@@ -14,7 +14,7 @@
   ],
   "contributes": {
     "configuration": {
-      "title": "Markdown link updater",
+      "title": "Markdown Link Updater",
       "properties": {
         "markdownLinkUpdater.useGitIgnore": {
           "type": "boolean",
@@ -42,11 +42,12 @@
     "@typescript-eslint/eslint-plugin": "^4.1.1",
     "@typescript-eslint/parser": "^4.1.1",
     "eslint": "^7.9.0",
-    "fs-extra": "^9.0.1",
-    "glob": "^7.1.6",
     "mocha": "^8.1.3",
     "typescript": "^4.0.2",
     "vscode-test": "^1.4.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "fs-extra": "^9.0.1",
+    "glob": "^7.1.6"
+  }
 }
