@@ -10,6 +10,7 @@
   },
   "version": "1.0.0",
   "license": "MIT",
+  "publisher": "mathiassoeholm",
   "engines": {
     "vscode": "^1.50.0"
   },
