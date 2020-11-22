@@ -15,8 +15,16 @@
     "vscode": "^1.50.0"
   },
   "categories": [
+    "Programming Languages",
     "Other"
   ],
+  "keywords": [
+    "markdown",
+    "automatic",
+    "sync",
+    "links"
+  ],
+  "icon": "images/icon.png",
   "activationEvents": [
     "onStartupFinished"
   ],

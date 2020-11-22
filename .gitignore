@@ -4,3 +4,4 @@ node_modules
 *.vsix
 /temp-test-files
 yarn-error.log
+.DS_Store
