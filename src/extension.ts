@@ -4,6 +4,7 @@ import * as fse from "fs-extra";
 import * as path from "path";
 import { exec } from "child_process";
 import { glob } from "glob";
+import * as minimatch from "minimatch";
 
 // prettier-ignore
 const mdLinkRegex = new RegExp(
@@ -21,15 +22,38 @@ const mdLinkRegex = new RegExp(
 
 export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
+    const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
+    const excludeDirs = config.get("excludeDirs", ["**/node_modules/**"]);
+
     const renamedFiles: { oldPath: string; newPath: string }[] = [];
 
+    const pathMatchesExcludePattern = (filePath: string) => {
+      return excludeDirs.some((excludedDir) => {
+        return minimatch(filePath, excludedDir);
+      });
+    };
+
     const collectFilesPromises = e.files
-      .filter((f) => !f.oldUri.fsPath.match(/[\\/]node_modules[\\/]/))
+      .filter((f) => !pathMatchesExcludePattern(f.oldUri.fsPath))
       .map(async (renamedFileOrDir) => {
         const isDirectory = (
           await fs.lstat(renamedFileOrDir.newUri.fsPath)
         ).isDirectory();
         if (isDirectory) {
+          if (
+            pathMatchesExcludePattern(
+              path.join(
+                renamedFileOrDir.oldUri.fsPath,
+                "____random-test-file____"
+              )
+            )
+          ) {
+            // We land in this case when for example the pattern '**/node_modules/**' is used and someone
+            // renames the node_modules directory. '/node_modules' is not matched by **/node_modules/**
+            // but all files beneath it is.
+            return;
+          }
+
           await new Promise((resolve, reject) => {
             glob(
               renamedFileOrDir.newUri.fsPath + "/**/*.*",
@@ -102,7 +126,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const markdownFiles = await vscode.workspace.findFiles(
       "**/*.md",
-      "**/node_modules/**"
+      `{${excludeDirs.join(",")}}`
     );
 
     const markdownFilePromises = markdownFiles.map(async (mdFile) => {

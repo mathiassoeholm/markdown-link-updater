@@ -36,6 +36,13 @@
           "type": "boolean",
           "default": false,
           "description": "Skip files that are ignored by git. This can be SLOW on large projects, so it is encouraged to active it on a per project basis."
+        },
+        "markdownLinkUpdater.excludeDirs": {
+          "type": "array",
+          "default": [
+            "**/node_modules/**"
+          ],
+          "description": "Array of glob patterns used to exclude specific folders and files"
         }
       }
     }
@@ -64,6 +71,7 @@
   },
   "dependencies": {
     "fs-extra": "^9.0.1",
-    "glob": "^7.1.6"
+    "glob": "^7.1.6",
+    "minimatch": "^3.0.4"
   }
 }

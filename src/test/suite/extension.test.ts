@@ -69,39 +69,58 @@ interface TestConfig {
   startFileSystem: FileSystemDescription;
   renames: Array<{ from: string; to: string }>;
   expectedEndFileSystem: FileSystemDescription;
+  mockSettings?: { [key: string]: any };
 }
 
-const test = (config: TestConfig) => {
-  it(config.title, async () => {
-    const edit = new vscode.WorkspaceEdit();
-    config.renames.forEach(({ from, to }) => {
-      edit.renameFile(
-        vscode.Uri.file(path.join(tempTestFilesPath, from)),
-        vscode.Uri.file(path.join(tempTestFilesPath, to))
-      );
-    });
-
-    await generateFileSystem(config.startFileSystem);
-    await vscode.commands.executeCommand(
-      "vscode.openFolder",
-      vscode.Uri.file(tempTestFilesPath)
-    );
-
-    await vscode.workspace.applyEdit(edit);
-
-    await waitFor(() => verifyFileSystem(config.expectedEndFileSystem), {
-      interval: 500,
-      timeout: 5000,
-    });
-  }).timeout(10000);
-};
-
 describe("Extension Test Suite", () => {
+  let originalGetConfiguration: typeof vscode.workspace.getConfiguration;
+  let mockSettings: { [key: string]: any };
+
+  const test = (config: TestConfig) => {
+    it(config.title, async () => {
+      mockSettings = { slowUseGitIgnore: false, ...config.mockSettings };
+      const edit = new vscode.WorkspaceEdit();
+      config.renames.forEach(({ from, to }) => {
+        edit.renameFile(
+          vscode.Uri.file(path.join(tempTestFilesPath, from)),
+          vscode.Uri.file(path.join(tempTestFilesPath, to))
+        );
+      });
+
+      await generateFileSystem(config.startFileSystem);
+      await vscode.commands.executeCommand(
+        "vscode.openFolder",
+        vscode.Uri.file(tempTestFilesPath)
+      );
+
+      await vscode.workspace.applyEdit(edit);
+
+      await waitFor(() => verifyFileSystem(config.expectedEndFileSystem), {
+        interval: 500,
+        timeout: 5000,
+      });
+    }).timeout(10000);
+  };
+
   beforeEach(() => {
+    originalGetConfiguration = vscode.workspace.getConfiguration;
+    vscode.workspace.getConfiguration = (section, ...restArgs) => {
+      if (section === "markdownLinkUpdater") {
+        return {
+          get(key: string, defaultValue: any) {
+            return mockSettings[key] ?? defaultValue;
+          },
+        } as any;
+      } else {
+        return originalGetConfiguration(section, ...restArgs);
+      }
+    };
+
     fse.removeSync(tempTestFilesPath);
   });
 
   afterEach(() => {
+    vscode.workspace.getConfiguration = originalGetConfiguration;
     fse.removeSync(tempTestFilesPath);
   });
 
@@ -243,6 +262,61 @@ describe("Extension Test Suite", () => {
           "hello.txt": "hello",
         },
       },
+    },
+  });
+
+  test({
+    title: "ignores markdown files in excluded directories",
+    startFileSystem: {
+      ["ignored-1"]: {
+        ["file-1.md"]: "[](../hello.txt)",
+      },
+      ["ignored-2"]: {
+        ["file-2.md"]: "[](../hello.txt)",
+      },
+      ["hello.txt"]: "hello",
+    },
+    renames: [{ from: "hello.txt", to: "hello-changed.txt" }],
+    expectedEndFileSystem: {
+      ["ignored-1"]: {
+        ["file-1.md"]: "[](../hello.txt)",
+      },
+      ["ignored-2"]: {
+        ["file-2.md"]: "[](../hello.txt)",
+      },
+      ["hello-changed.txt"]: "hello",
+    },
+    mockSettings: {
+      excludeDirs: ["**/ignored-1/**", "**/ignored-2/**"],
+    },
+  });
+
+  test({
+    title: "ignores changes from excluded directories",
+    startFileSystem: {
+      ["ignored-1"]: {
+        ["hello.txt"]: "hello",
+      },
+      ["ignored-2"]: {
+        ["howdy.txt"]: "howdy",
+      },
+      ["file-1.md"]: "[](ignored-1/hello.txt)\n[](ignored-2/howdy.txt)",
+    },
+    renames: [
+      { from: "ignored-1/hello.txt", to: "ignored-1/hello-changed.txt" },
+      { from: "ignored-2", to: "ignored-2-changed" },
+    ],
+    expectedEndFileSystem: {
+      ["ignored-1"]: {
+        ["hello-changed.txt"]: "hello",
+      },
+      ["ignored-2-changed"]: {
+        ["howdy.txt"]: "howdy",
+      },
+      ["file-1.md"]: "[](ignored-1/hello.txt)\n[](ignored-2/howdy.txt)",
+    },
+    mockSettings: {
+      excludeDirs: ["**/ignored-1/**", "**/ignored-2/**"],
     },
   });
 });
