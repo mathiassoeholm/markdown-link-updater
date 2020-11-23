@@ -17,7 +17,3 @@ This extension contributes the following settings:
 ## Release Notes
 
 See [CHANGELOG](CHANGELOG.md) for more information.
-
-### 1.0.0
-
-Initial release of markdown-link-updater
