@@ -1,5 +1,7 @@
 # Markdown Link Updater
 
+[![version](https://img.shields.io/vscode-marketplace/v/mathiassoeholm.markdown-link-updater.svg?style=flat-square&label=vscode%20marketplace)](https://marketplace.visualstudio.com/items?itemName=mathiassoeholm.markdown-link-updater)
+
 ## Features
 
 Updates Markdown links automatically, when files in the workspace are moved or renamed.
