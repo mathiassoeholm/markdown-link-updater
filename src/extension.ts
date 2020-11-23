@@ -23,25 +23,41 @@ const mdLinkRegex = new RegExp(
 export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
     const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
-    const excludeDirs = config.get("excludeDirs", ["**/node_modules/**"]);
+    const exclude = config.get("exclude", ["**/node_modules/**"]);
+    const include = config.get("include", []);
 
     const renamedFiles: { oldPath: string; newPath: string }[] = [];
 
-    const pathMatchesExcludePattern = (filePath: string) => {
-      return excludeDirs.some((excludedDir) => {
-        return minimatch(filePath, excludedDir);
+    const shouldIncludePath = (filePath: string) => {
+      const relativePath = vscode.workspace.asRelativePath(filePath);
+      const matchesIncludeList = include.some((pattern) => {
+        return minimatch(relativePath, pattern);
       });
+
+      if (matchesIncludeList) {
+        return true;
+      }
+
+      if (include.length > 0) {
+        return false;
+      }
+
+      const matchesExcludeList = exclude.some((pattern) => {
+        return minimatch(relativePath, pattern);
+      });
+
+      return !matchesExcludeList;
     };
 
     const collectFilesPromises = e.files
-      .filter((f) => !pathMatchesExcludePattern(f.oldUri.fsPath))
+      .filter((f) => shouldIncludePath(f.oldUri.fsPath))
       .map(async (renamedFileOrDir) => {
         const isDirectory = (
           await fs.lstat(renamedFileOrDir.newUri.fsPath)
         ).isDirectory();
         if (isDirectory) {
           if (
-            pathMatchesExcludePattern(
+            !shouldIncludePath(
               path.join(
                 renamedFileOrDir.oldUri.fsPath,
                 "____random-test-file____"
@@ -124,10 +140,16 @@ export function activate(context: vscode.ExtensionContext) {
       }
     });
 
-    const markdownFiles = await vscode.workspace.findFiles(
+    let markdownFiles = await vscode.workspace.findFiles(
       "**/*.md",
-      `{${excludeDirs.join(",")}}`
+      `{${exclude.join(",")}}`
     );
+
+    if (include.length > 0) {
+      markdownFiles = markdownFiles.filter((file) =>
+        shouldIncludePath(file.fsPath)
+      );
+    }
 
     const markdownFilePromises = markdownFiles.map(async (mdFile) => {
       if (await fileIsIgnoredByGit(mdFile.fsPath)) {

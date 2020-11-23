@@ -287,7 +287,7 @@ describe("Extension Test Suite", () => {
       ["hello-changed.txt"]: "hello",
     },
     mockSettings: {
-      excludeDirs: ["**/ignored-1/**", "**/ignored-2/**"],
+      exclude: ["**/ignored-1/**", "**/ignored-2/**"],
     },
   });
 
@@ -316,7 +316,62 @@ describe("Extension Test Suite", () => {
       ["file-1.md"]: "[](ignored-1/hello.txt)\n[](ignored-2/howdy.txt)",
     },
     mockSettings: {
-      excludeDirs: ["**/ignored-1/**", "**/ignored-2/**"],
+      exclude: ["**/ignored-1/**", "**/ignored-2/**"],
+    },
+  });
+
+  test({
+    title: "only includes markdown files from included dirs",
+    startFileSystem: {
+      ["not-included"]: {
+        ["file.md"]: "[](hello.txt)",
+        ["hello.txt"]: "hello",
+      },
+      ["included"]: {
+        ["file.md"]: "[](hello.txt)",
+        ["hello.txt"]: "hello",
+      },
+      ["not-included.md"]: "[](included/hello.txt)",
+    },
+    renames: [
+      { from: "included/hello.txt", to: "included/hello-changed.txt" },
+      { from: "not-included/hello.txt", to: "not-included/hello-changed.txt" },
+    ],
+    expectedEndFileSystem: {
+      ["not-included"]: {
+        ["file.md"]: "[](hello.txt)",
+        ["hello-changed.txt"]: "hello",
+      },
+      ["included"]: {
+        ["file.md"]: "[](hello-changed.txt)",
+        ["hello-changed.txt"]: "hello",
+      },
+      ["not-included.md"]: "[](included/hello.txt)",
+    },
+    mockSettings: {
+      include: ["**/included/**"],
+    },
+  });
+
+  test({
+    title: "can use multiple include patterns",
+    startFileSystem: {
+      ["included"]: {
+        "hello.txt": "hello",
+        "file.md": "[](hello.txt)",
+      },
+      ["included-file.md"]: "[](included/hello.txt)",
+    },
+    renames: [{ from: "included/hello.txt", to: "included/hello-changed.txt" }],
+    expectedEndFileSystem: {
+      ["included"]: {
+        "hello-changed.txt": "hello",
+        "file.md": "[](hello-changed.txt)",
+      },
+      ["included-file.md"]: "[](included/hello-changed.txt)",
+    },
+    mockSettings: {
+      include: ["**/included/**", "included-file.md"],
     },
   });
 });
