@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.1.2]
+
+- Replace backslash `\` with forward-slash `/` in the resulting links
+
 ## [1.1.1]
 
 - Fix wrong description in README file.

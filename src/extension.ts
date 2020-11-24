@@ -169,7 +169,7 @@ export function activate(context: vscode.ExtensionContext) {
               path.relative(path.dirname(mdFile.fsPath), newPath)
             );
 
-            return `[${g1}](${newLink})`;
+            return `[${g1}](${newLink.replace(/\\/g, "/")})`;
           } else {
             continue;
           }
