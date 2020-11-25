@@ -1,8 +1,12 @@
 # Change Log
 
+## [1.1.3]
+
+- Replace backslash `\` with forward-slash `/` in the renamed files' own links.
+
 ## [1.1.2]
 
-- Replace backslash `\` with forward-slash `/` in the resulting links
+- Replace backslash `\` with forward-slash `/` in other markdown files linking to the renamed file.
 
 ## [1.1.1]
 

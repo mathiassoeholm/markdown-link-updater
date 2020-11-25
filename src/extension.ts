@@ -129,7 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
           const newLink = path.normalize(
             path.relative(path.dirname(newFilePath), absoluteLinkPath)
           );
-          return `[${g1}](${newLink})`;
+          return `[${g1}](${newLink.replace(/\\/g, "/")})`;
         } else {
           return match;
         }
