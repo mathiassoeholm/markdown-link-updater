@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.1.4]
+
+- Take section references into account. [Fixes #2](https://github.com/mathiassoeholm/markdown-link-updater/issues/2).
+
 ## [1.1.3]
 
 - Replace backslash `\` with forward-slash `/` in the renamed files' own links.
