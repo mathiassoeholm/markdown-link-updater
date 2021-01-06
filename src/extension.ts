@@ -70,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
           }
 
-          await new Promise((resolve, reject) => {
+          await new Promise<void>((resolve, reject) => {
             glob(
               renamedFileOrDir.newUri.fsPath + "/**/*.*",
               { nodir: true },
@@ -117,10 +117,18 @@ export function activate(context: vscode.ExtensionContext) {
       const newFilePath = renamedFile.newPath;
       const text = await fs.readFile(newFilePath, "utf8");
 
-      const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
+      const modifedText = text.replace(mdLinkRegex, (match, name, link) => {
+        const linkWithSectionMatch = link.match(/(.+\.md)(#[^\s\/]+)/);
+        let section = "";
+
+        if (linkWithSectionMatch) {
+          link = linkWithSectionMatch[1];
+          section = linkWithSectionMatch[2];
+        }
+
         const absoluteLinkPath = path.join(
           path.dirname(renamedFile.oldPath),
-          g2
+          link
         );
 
         const linkedResourceExists = fse.pathExistsSync(absoluteLinkPath);
@@ -129,7 +137,7 @@ export function activate(context: vscode.ExtensionContext) {
           const newLink = path.normalize(
             path.relative(path.dirname(newFilePath), absoluteLinkPath)
           );
-          return `[${g1}](${newLink.replace(/\\/g, "/")})`;
+          return `[${name}](${newLink.replace(/\\/g, "/")}${section})`;
         } else {
           return match;
         }
@@ -158,10 +166,18 @@ export function activate(context: vscode.ExtensionContext) {
 
       const text = await fs.readFile(mdFile.fsPath, "utf8");
 
-      const modifedText = text.replace(mdLinkRegex, (match, g1, g2) => {
+      const modifedText = text.replace(mdLinkRegex, (match, name, link) => {
         for (const { oldPath, newPath } of renamedFiles) {
+          const linkWithSectionMatch = link.match(/(.+\.md)(#[^\s\/]+)/);
+          let section = "";
+
+          if (linkWithSectionMatch) {
+            link = linkWithSectionMatch[1];
+            section = linkWithSectionMatch[2];
+          }
+
           const isLinkToMovedFile =
-            path.normalize(path.join(path.dirname(mdFile.fsPath), g2)) ===
+            path.normalize(path.join(path.dirname(mdFile.fsPath), link)) ===
             oldPath;
 
           if (isLinkToMovedFile) {
@@ -169,7 +185,7 @@ export function activate(context: vscode.ExtensionContext) {
               path.relative(path.dirname(mdFile.fsPath), newPath)
             );
 
-            return `[${g1}](${newLink.replace(/\\/g, "/")})`;
+            return `[${name}](${newLink.replace(/\\/g, "/")}${section})`;
           } else {
             continue;
           }

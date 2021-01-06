@@ -28,7 +28,7 @@ async function verifyFileSystem(node: string | FileSystemDescription) {
     }
   }
 
-  await new Promise((resolve, reject) =>
+  await new Promise<void>((resolve, reject) =>
     glob(tempTestFilesPath + "/**/*.*", { nodir: true }, (err, matches) => {
       if (err) {
         reject(err);
@@ -372,6 +372,34 @@ describe("Extension Test Suite", () => {
     },
     mockSettings: {
       include: ["**/included/**", "included-file.md"],
+    },
+  });
+
+  test({
+    title: "updates the renamed files own links with section reference",
+    startFileSystem: {
+      ["file-1.md"]: `[link to file-2](file-2.md#test)`,
+      ["file-2.md"]: `# test`,
+    },
+    renames: [{ from: "file-1.md", to: "folder/file-1.md" }],
+    expectedEndFileSystem: {
+      ["folder"]: {
+        ["file-1.md"]: `[link to file-2](../file-2.md#test)`,
+      },
+      ["file-2.md"]: `# test`,
+    },
+  });
+
+  test({
+    title: "can update links in other files with a section reference",
+    startFileSystem: {
+      ["file1.md"]: "[link to file 2](file2.md#Title)",
+      ["file2.md"]: "## Title",
+    },
+    renames: [{ from: "file2.md", to: "file2-changed.md" }],
+    expectedEndFileSystem: {
+      ["file1.md"]: "[link to file 2](file2-changed.md#Title)",
+      ["file2-changed.md"]: "## Title",
     },
   });
 });
