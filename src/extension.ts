@@ -33,6 +33,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   const textBeforeSave = new Map();
 
+  // TODO: Only conside markdown files in onWillSaveTextDocument AND onDidSaveTextDocument
+
   const onWillSaveDisposable = vscode.workspace.onWillSaveTextDocument(
     async (e) => {
       if (!experimentalRenameHeadings) {
@@ -49,12 +51,49 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    console.log("Before", textBeforeSave.get(e.fileName));
-    console.log("After", e.getText());
+    try {
+      console.log("Before", textBeforeSave.get(e.fileName));
+      console.log("After", e.getText());
 
-    const diff = diffLines(textBeforeSave.get(e.fileName), e.getText());
+      const diff = diffLines(textBeforeSave.get(e.fileName), e.getText(), {});
 
-    console.log(diff);
+      const renamedHeadings = diff
+        .map((change, index) => {
+          const nextChange = diff[index + 1];
+
+          if (!nextChange) {
+            return null;
+          }
+
+          const removedAndAddedLine =
+            change.removed === true && nextChange.added === true;
+
+          if (removedAndAddedLine) {
+            const oldLine = change.value;
+            const newLine = nextChange.value;
+
+            const headingRegex = /^(#+ )(.+)/;
+            const oldLineMatch = oldLine.match(headingRegex);
+            const newLineMatch = newLine.match(headingRegex);
+
+            if (
+              oldLineMatch &&
+              newLineMatch &&
+              // Check if same header type
+              oldLineMatch[1] === newLineMatch[1]
+            ) {
+              return { oldHeader: oldLineMatch[2], newHeader: newLineMatch[2] };
+            }
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+
+      console.log("renamedHeadings", renamedHeadings);
+    } finally {
+      textBeforeSave.delete(e.fileName);
+    }
   });
 
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
