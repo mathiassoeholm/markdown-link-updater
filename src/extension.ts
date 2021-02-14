@@ -5,6 +5,7 @@ import * as path from "path";
 import { exec } from "child_process";
 import { glob } from "glob";
 import * as minimatch from "minimatch";
+import { diffLines } from "diff";
 
 // prettier-ignore
 const mdLinkRegex = new RegExp(
@@ -21,8 +22,42 @@ const mdLinkRegex = new RegExp(
   'g');
 
 export function activate(context: vscode.ExtensionContext) {
+  const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
+  // const experimentalRenameHeadings = config.get(
+  //   "experimentalRenameHeadings",
+  //   false
+  // );
+
+  // TODO: REMOVE THIS LINE!
+  const experimentalRenameHeadings = true;
+
+  const textBeforeSave = new Map();
+
+  const onWillSaveDisposable = vscode.workspace.onWillSaveTextDocument(
+    async (e) => {
+      if (!experimentalRenameHeadings) {
+        return;
+      }
+      const text = await fs.readFile(e.document.fileName, "utf8");
+
+      textBeforeSave.set(e.document.fileName, text);
+    }
+  );
+
+  const onDidSaveDisposable = vscode.workspace.onDidSaveTextDocument((e) => {
+    if (!experimentalRenameHeadings) {
+      return;
+    }
+
+    console.log("Before", textBeforeSave.get(e.fileName));
+    console.log("After", e.getText());
+
+    const diff = diffLines(textBeforeSave.get(e.fileName), e.getText());
+
+    console.log(diff);
+  });
+
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
-    const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
     const exclude = config.get("exclude", ["**/node_modules/**"]);
     const include = config.get("include", []);
 
@@ -202,6 +237,8 @@ export function activate(context: vscode.ExtensionContext) {
     await Promise.all([...markdownFilePromises, ...renamedFilePromises]);
   });
 
+  context.subscriptions.push(onWillSaveDisposable);
+  context.subscriptions.push(onDidSaveDisposable);
   context.subscriptions.push(disposable);
 }
 
