@@ -6,6 +6,7 @@ import { exec } from "child_process";
 import { glob } from "glob";
 import * as minimatch from "minimatch";
 import { diffLines } from "diff";
+import { headingToAnchor } from "./heading-to-anchor";
 
 // prettier-ignore
 const mdLinkRegex = new RegExp(
@@ -23,78 +24,101 @@ const mdLinkRegex = new RegExp(
 
 export function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
-  // const experimentalRenameHeadings = config.get(
-  //   "experimentalRenameHeadings",
-  //   false
-  // );
-
-  // TODO: REMOVE THIS LINE!
-  const experimentalRenameHeadings = true;
+  const experimentalRenameHeadings = config.get(
+    "experimentalRenameHeadings",
+    false
+  );
 
   const textBeforeSave = new Map();
-
-  // TODO: Only conside markdown files in onWillSaveTextDocument AND onDidSaveTextDocument
 
   const onWillSaveDisposable = vscode.workspace.onWillSaveTextDocument(
     async (e) => {
       if (!experimentalRenameHeadings) {
         return;
       }
-      const text = await fs.readFile(e.document.fileName, "utf8");
 
-      textBeforeSave.set(e.document.fileName, text);
+      if (e.document.fileName.endsWith(".md")) {
+        const text = await fs.readFile(e.document.fileName, "utf8");
+        textBeforeSave.set(e.document.fileName, text);
+      }
     }
   );
 
-  const onDidSaveDisposable = vscode.workspace.onDidSaveTextDocument((e) => {
-    if (!experimentalRenameHeadings) {
-      return;
-    }
+  const onDidSaveDisposable = vscode.workspace.onDidSaveTextDocument(
+    async (e) => {
+      if (!experimentalRenameHeadings) {
+        return;
+      }
 
-    try {
-      console.log("Before", textBeforeSave.get(e.fileName));
-      console.log("After", e.getText());
+      const textBefore = textBeforeSave.get(e.fileName);
 
-      const diff = diffLines(textBeforeSave.get(e.fileName), e.getText(), {});
+      if (textBefore === undefined) {
+        return;
+      }
 
-      const renamedHeadings = diff
-        .map((change, index) => {
-          const nextChange = diff[index + 1];
+      try {
+        const diff = diffLines(textBefore, e.getText(), {});
 
-          if (!nextChange) {
-            return null;
-          }
+        const renamedHeadings = diff
+          .map((change, index) => {
+            const nextChange = diff[index + 1];
 
-          const removedAndAddedLine =
-            change.removed === true && nextChange.added === true;
-
-          if (removedAndAddedLine) {
-            const oldLine = change.value;
-            const newLine = nextChange.value;
-
-            const headingRegex = /^(#+ )(.+)/;
-            const oldLineMatch = oldLine.match(headingRegex);
-            const newLineMatch = newLine.match(headingRegex);
-
-            if (
-              oldLineMatch &&
-              newLineMatch &&
-              // Check if same header type
-              oldLineMatch[1] === newLineMatch[1]
-            ) {
-              return { oldHeader: oldLineMatch[2], newHeader: newLineMatch[2] };
+            if (!nextChange) {
+              return null;
             }
-          }
 
-          return null;
-        })
-        .filter(Boolean);
+            const removedAndAddedLine =
+              change.removed === true && nextChange.added === true;
 
-      console.log("renamedHeadings", renamedHeadings);
-    } finally {
-      textBeforeSave.delete(e.fileName);
+            if (removedAndAddedLine) {
+              const oldLine = change.value;
+              const newLine = nextChange.value;
+
+              const headingRegex = /^(#+ )(.+)/;
+              const oldLineMatch = oldLine.match(headingRegex);
+              const newLineMatch = newLine.match(headingRegex);
+
+              if (
+                oldLineMatch &&
+                newLineMatch &&
+                // Check if same header type
+                oldLineMatch[1] === newLineMatch[1]
+              ) {
+                return {
+                  oldHeader: oldLineMatch[2],
+                  newHeader: newLineMatch[2],
+                };
+              }
+            }
+
+            return null;
+          })
+          .filter(Boolean) as Array<{ oldHeader: string; newHeader: string }>;
+
+        const modifiedText = renamedHeadings.reduce(
+          (text, { oldHeader, newHeader }) => {
+            return text.replace(mdLinkRegex, (match, name, link) => {
+              const oldHeaderAnchor = headingToAnchor(oldHeader);
+              const newHeaderAnchor = headingToAnchor(newHeader);
+
+              if (link === `#${oldHeaderAnchor}`) {
+                return `[${name}](#${newHeaderAnchor})`;
+              } else {
+                return match;
+              }
+            });
+          },
+          e.getText()
+        );
+
+        if (e.getText() !== modifiedText) {
+          await fs.writeFile(e.fileName, modifiedText, "utf8");
+        }
+      } finally {
+        textBeforeSave.delete(e.fileName);
+      }
     }
-  });
+  );
 
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
     const exclude = config.get("exclude", ["**/node_modules/**"]);
