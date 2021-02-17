@@ -22,17 +22,20 @@ const mdLinkRegex = new RegExp(
   '\\)',          // Literal closing parenthesis
   'g');
 
-export function activate(context: vscode.ExtensionContext) {
-  const config = vscode.workspace.getConfiguration("markdownLinkUpdater");
-  const experimentalRenameHeadings = config.get(
-    "experimentalRenameHeadings",
-    false
-  );
+function getConfig() {
+  return vscode.workspace.getConfiguration("markdownLinkUpdater");
+}
 
+export function activate(context: vscode.ExtensionContext) {
   const textBeforeSave = new Map();
 
   const onWillSaveDisposable = vscode.workspace.onWillSaveTextDocument(
     async (e) => {
+      const experimentalRenameHeadings = getConfig().get(
+        "experimentalRenameHeadings",
+        false
+      );
+
       if (!experimentalRenameHeadings) {
         return;
       }
@@ -46,6 +49,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   const onDidSaveDisposable = vscode.workspace.onDidSaveTextDocument(
     async (e) => {
+      const experimentalRenameHeadings = getConfig().get(
+        "experimentalRenameHeadings",
+        false
+      );
+
       if (!experimentalRenameHeadings) {
         return;
       }
@@ -121,8 +129,8 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   const disposable = vscode.workspace.onDidRenameFiles(async (e) => {
-    const exclude = config.get("exclude", ["**/node_modules/**"]);
-    const include = config.get("include", []);
+    const exclude = getConfig().get("exclude", ["**/node_modules/**"]);
+    const include = getConfig().get("include", []);
 
     const renamedFiles: { oldPath: string; newPath: string }[] = [];
 
