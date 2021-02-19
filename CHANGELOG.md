@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.2.2]
+
+- Internal links to headers now work correctly with punctuation and foreign characters.
+
 ## [1.2.1]
 
 - Experimental support for automatically renaming internal links to headers. See https://github.com/mathiassoeholm/markdown-link-updater/issues/3.
