@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { promises as fs } from "fs";
 import { ChangeEventPayload } from "./models";
-import { pureGetActions } from "./put-get-actions";
+import { pureGetEdits } from "./put-get-edits";
 
 function activate(context: vscode.ExtensionContext) {
   let payloads: Array<Partial<ChangeEventPayload["save"]>> = [];
@@ -28,7 +28,7 @@ function activate(context: vscode.ExtensionContext) {
 
       payload.contentAfter = await fs.readFile(e.fileName, "utf-8");
 
-      const actions = pureGetActions(
+      const edits = pureGetEdits(
         { type: "save", payload: payload as ChangeEventPayload["save"] },
         [] // TODO: Pass in filelist
       );

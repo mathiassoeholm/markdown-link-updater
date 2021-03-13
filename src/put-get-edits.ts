@@ -11,7 +11,7 @@ import {
 
 const mdLinkRegex = /\[([^\]]*)\]\(([^\)]+)\)/;
 
-function pureGetActions<T extends ChangeEventType>(
+function pureGetEdits<T extends ChangeEventType>(
   event: ChangeEvent<T>,
   fileList: FileList
 ) {
@@ -99,4 +99,4 @@ function* handleSaveEvent(
   }
 }
 
-export { pureGetActions };
+export { pureGetEdits };

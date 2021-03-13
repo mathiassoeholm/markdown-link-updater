@@ -1,10 +1,10 @@
 import { ChangeEvent, ChangeEventType, FileList } from "../models";
-import { pureGetActions } from "../put-get-actions";
+import { pureGetEdits } from "../put-get-edits";
 
 const trim = (s: string) => s.trim();
 const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 
-describe("pureGetActions", () => {
+describe("pureGetEdits", () => {
   it.each`
     oldHeader        | oldLink       | newHeader         | newLink
     ${"old text"}    | ${"old-text"} | ${"the new txt"}  | ${"the-new-txt"}
@@ -37,7 +37,7 @@ describe("pureGetActions", () => {
         },
       ];
 
-      expect(pureGetActions(event, markdownFiles)[0]).toEqual({
+      expect(pureGetEdits(event, markdownFiles)[0]).toEqual({
         range: {
           start: {
             line: 0,
