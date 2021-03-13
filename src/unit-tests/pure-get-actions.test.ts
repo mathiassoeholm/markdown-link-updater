@@ -5,43 +5,49 @@ const trim = (s: string) => s.trim();
 const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 
 describe("pureGetActions", () => {
-  it("renames link when header changes", () => {
-    const event: ChangeEvent<"save"> = {
-      type: "save",
-      payload: {
-        path: "/files/foo.md",
-        contentBefore: trimLines(`
-          [link](#typescript-is-nice)
+  it.each`
+    oldHeader     | oldLink       | newHeader        | newLink
+    ${"old text"} | ${"old-text"} | ${"the new txt"} | ${"the-new-txt"}
+  `(
+    "renames link when header changes from '$oldHeader' to '$newHeader'",
+    ({ oldHeader, oldLink, newHeader, newLink }) => {
+      const event: ChangeEvent<"save"> = {
+        type: "save",
+        payload: {
+          path: "/files/foo.md",
+          contentBefore: trimLines(`
+          [link](#${oldLink})
 
-          ## typescript is nice
+          ## ${oldHeader}
         `),
-        contentAfter: trimLines(`
-          [link](#typescript-is-nice)
+          contentAfter: trimLines(`
+          [link](#${oldLink})
 
-          ## typescript is cool
+          ## ${newHeader}
         `),
-      },
-    };
-
-    const markdownFiles: FileList = [
-      {
-        path: event.payload.path,
-        content: event.payload.contentAfter,
-      },
-    ];
-
-    expect(pureGetActions(event, markdownFiles)[0]).toEqual({
-      range: {
-        start: {
-          line: 0,
-          character: 0,
         },
-        end: {
-          line: 0,
-          character: 27,
+      };
+
+      const markdownFiles: FileList = [
+        {
+          path: event.payload.path,
+          content: event.payload.contentAfter,
         },
-      },
-      newText: "[link](#typescript-is-cool)",
-    });
-  });
+      ];
+
+      expect(pureGetActions(event, markdownFiles)[0]).toEqual({
+        range: {
+          start: {
+            line: 0,
+            character: 0,
+          },
+          end: {
+            line: 0,
+            character: `[link](#${oldLink})`.length,
+          },
+        },
+        newText: `[link](#${newLink})`,
+      });
+    }
+  );
 });
