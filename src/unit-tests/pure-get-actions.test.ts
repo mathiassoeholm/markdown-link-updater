@@ -6,8 +6,10 @@ const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 
 describe("pureGetActions", () => {
   it.each`
-    oldHeader     | oldLink       | newHeader        | newLink
-    ${"old text"} | ${"old-text"} | ${"the new txt"} | ${"the-new-txt"}
+    oldHeader        | oldLink       | newHeader         | newLink
+    ${"old text"}    | ${"old-text"} | ${"the new txt"}  | ${"the-new-txt"}
+    ${"halløjs's"}   | ${"halløjss"} | ${"dåv    dav"}   | ${"dåv-dav"}
+    ${"emoji 👍 np"} | ${"emoji-np"} | ${"emoji 😃-yay"} | ${"emoji--yay"}
   `(
     "renames link when header changes from '$oldHeader' to '$newHeader'",
     ({ oldHeader, oldLink, newHeader, newLink }) => {
