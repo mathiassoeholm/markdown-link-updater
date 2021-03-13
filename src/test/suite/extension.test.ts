@@ -77,7 +77,7 @@ describe("Extension Test Suite", () => {
   let mockSettings: { [key: string]: any };
 
   const test = (config: TestConfig) => {
-    it(config.title, async () => {
+    (it(config.title, async () => {
       mockSettings = { slowUseGitIgnore: false, ...config.mockSettings };
       const edit = new vscode.WorkspaceEdit();
       config.renames.forEach(({ from, to }) => {
@@ -99,7 +99,7 @@ describe("Extension Test Suite", () => {
         interval: 500,
         timeout: 5000,
       });
-    }).timeout(10000);
+    }) as any).timeout(10000);
   };
 
   beforeEach(() => {

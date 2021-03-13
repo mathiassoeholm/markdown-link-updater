@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
 import { promises as fs } from "fs";
-import { ChangeEvent, ChangeEventPayload, Path } from "./models";
+import { ChangeEventPayload } from "./models";
 import { pureGetActions } from "./put-get-actions";
 
 function activate(context: vscode.ExtensionContext) {
-  const payloads: Array<Partial<ChangeEventPayload["save"]>> = [];
+  let payloads: Array<Partial<ChangeEventPayload["save"]>> = [];
 
   const onWillSaveDisposable = vscode.workspace.onWillSaveTextDocument(
     async (e) => {
@@ -32,6 +32,11 @@ function activate(context: vscode.ExtensionContext) {
         { type: "save", payload: payload as ChangeEventPayload["save"] },
         [] // TODO: Pass in filelist
       );
+
+      try {
+      } finally {
+        payloads = payloads.filter((p) => p.path !== p.path);
+      }
     }
   );
 
