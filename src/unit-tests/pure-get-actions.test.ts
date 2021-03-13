@@ -2,12 +2,12 @@ import { ChangeEvent, ChangeEventType, FileList } from "../models";
 import { pureGetActions } from "../put-get-actions";
 
 const trim = (s: string) => s.trim();
-const trimLines = (s: string) => s.split("\n").map(trim).join("\n");
+const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 
 describe("pureGetActions", () => {
   it("renames link when header changes", () => {
-    const event: ChangeEvent<ChangeEventType.save> = {
-      type: ChangeEventType.save,
+    const event: ChangeEvent<"save"> = {
+      type: "save",
       payload: {
         path: "/files/foo.md",
         contentBefore: trimLines(`
@@ -30,21 +30,18 @@ describe("pureGetActions", () => {
       },
     ];
 
-    expect(pureGetActions(event, markdownFiles)).toEqual([
-      {
-        type: "replace",
-        range: {
-          start: {
-            line: 0,
-            character: 0,
-          },
-          end: {
-            line: 0,
-            character: 27,
-          },
-          newText: "[link](#typescript-is-cool)",
+    expect(pureGetActions(event, markdownFiles)[0]).toEqual({
+      range: {
+        start: {
+          line: 0,
+          character: 0,
+        },
+        end: {
+          line: 0,
+          character: 27,
         },
       },
-    ]);
+      newText: "[link](#typescript-is-cool)",
+    });
   });
 });
