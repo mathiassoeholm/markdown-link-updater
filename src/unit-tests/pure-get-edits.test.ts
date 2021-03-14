@@ -9,7 +9,8 @@ describe("pureGetEdits", () => {
     it("updates files linking to the renamed file", () => {
       const file1 = {
         path: "file-1.md",
-        content: "[link to file-2](./folder/file-2.md)",
+        content:
+          "# File 1\na link [link to file-2](./folder/file-2.md) is here",
       };
 
       const file2 = {
@@ -34,12 +35,12 @@ describe("pureGetEdits", () => {
         path: file1.path,
         range: {
           start: {
-            line: 0,
-            character: 0,
+            line: 1,
+            character: 7,
           },
           end: {
-            line: 0,
-            character: file1.content.length,
+            line: 1,
+            character: 43,
           },
         },
         newText: `[link to file-2](${event.payload.pathAfter})`,

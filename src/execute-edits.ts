@@ -1,8 +1,10 @@
 import { Position, Range, Uri, workspace, WorkspaceEdit } from "vscode";
 import { Edit } from "./models";
 
-function executeEdits(edits: Edit[]) {
-  edits.forEach(executeEdit);
+async function executeEdits(edits: Edit[]) {
+  for (const edit of edits) {
+    await executeEdit(edit);
+  }
 }
 
 function executeEdit(edit: Edit) {

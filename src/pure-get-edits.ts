@@ -1,4 +1,5 @@
 import { diffLines } from "diff";
+import * as path from "path";
 import { headingToAnchor } from "./heading-to-anchor";
 import {
   ChangeEvent,
@@ -10,20 +11,80 @@ import {
 } from "./models";
 
 const mdLinkRegex = /\[([^\]]*)\]\(([^\)]+)\)/;
+const targetWithSectionRegex = /(.+\.md)(#[^\s\/]+)/;
 
 function pureGetEdits<T extends ChangeEventType>(
   event: ChangeEvent<T>,
-  fileList: FileList
+  markdownFiles: FileList
 ) {
   const result = (() => {
     if (isEventOfType(event, "save")) {
       return [...handleSaveEvent(event.payload)];
+    } else if (isEventOfType(event, "rename")) {
+      return [...handleRenameEvent(event.payload, markdownFiles)];
     } else {
       return [];
     }
   })();
 
   return result;
+}
+function* handleRenameEvent(
+  payload: ChangeEventPayload["rename"],
+  markdownFiles: FileList
+): Generator<Edit> {
+  const pathBefore = path.normalize(payload.pathBefore);
+  const pathAfter = path.normalize(payload.pathAfter);
+
+  for (const markdownFile of markdownFiles) {
+    let lineNumber = -1;
+    for (const line of markdownFile.content.split("\n")) {
+      lineNumber++;
+
+      const match = mdLinkRegex.exec(line);
+      if (!match) {
+        continue;
+      }
+
+      let [fullMdLink, name, target] = match;
+      const targetWithSectionMatch = target.match(targetWithSectionRegex);
+      let section = "";
+
+      if (targetWithSectionMatch) {
+        target = targetWithSectionMatch[1];
+        section = targetWithSectionMatch[2];
+      }
+      const isLinkToMovedFile =
+        path.normalize(path.join(path.dirname(markdownFile.path), target)) ===
+        pathBefore;
+
+      if (isLinkToMovedFile) {
+        const newLink = path.normalize(
+          path.relative(path.dirname(markdownFile.path), pathAfter)
+        );
+
+        const newFullMdLink = `[${name}](${newLink.replace(
+          /\\/g,
+          "/"
+        )}${section})`;
+
+        yield {
+          path: markdownFile.path,
+          range: {
+            start: {
+              line: lineNumber,
+              character: match.index,
+            },
+            end: {
+              line: lineNumber,
+              character: match.index + fullMdLink.length,
+            },
+          },
+          newText: newFullMdLink,
+        };
+      }
+    }
+  }
 }
 
 function* handleSaveEvent(
