@@ -38,6 +38,7 @@ describe("pureGetEdits", () => {
       ];
 
       expect(pureGetEdits(event, markdownFiles)[0]).toEqual({
+        path: event.payload.path,
         range: {
           start: {
             line: 0,

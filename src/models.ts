@@ -28,6 +28,7 @@ export function isEventOfType<T extends ChangeEventType>(
 }
 
 export type Edit = {
+  path: Path;
   range: {
     start: {
       line: number;

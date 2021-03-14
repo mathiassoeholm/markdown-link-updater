@@ -79,6 +79,7 @@ function* handleSaveEvent(
 
         if (link === `#${oldHeaderAnchor}`) {
           yield {
+            path: payload.path,
             range: {
               start: {
                 line: lineNumber,

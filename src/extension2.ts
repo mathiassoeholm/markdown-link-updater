@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { promises as fs } from "fs";
 import { ChangeEventPayload } from "./models";
 import { pureGetEdits } from "./put-get-edits";
+import { executeEdits } from "./execute-edits";
 
 function activate(context: vscode.ExtensionContext) {
   let payloads: Array<Partial<ChangeEventPayload["save"]>> = [];
@@ -25,15 +26,15 @@ function activate(context: vscode.ExtensionContext) {
       if (!payload) {
         return;
       }
-
-      payload.contentAfter = await fs.readFile(e.fileName, "utf-8");
-
-      const edits = pureGetEdits(
-        { type: "save", payload: payload as ChangeEventPayload["save"] },
-        [] // TODO: Pass in filelist
-      );
-
       try {
+        payload.contentAfter = await fs.readFile(e.fileName, "utf-8");
+
+        const edits = pureGetEdits(
+          { type: "save", payload: payload as ChangeEventPayload["save"] },
+          [] // TODO: Pass in filelist
+        );
+
+        executeEdits(edits);
       } finally {
         payloads = payloads.filter((p) => p.path !== p.path);
       }
