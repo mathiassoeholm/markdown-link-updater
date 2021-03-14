@@ -9,7 +9,8 @@ export type ChangeEventPayload = {
     contentAfter: string;
   };
   ["rename"]: {
-    some: number;
+    pathBefore: Path;
+    pathAfter: Path;
   };
 };
 
