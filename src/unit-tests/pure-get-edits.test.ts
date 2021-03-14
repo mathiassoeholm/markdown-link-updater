@@ -6,6 +6,46 @@ const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 
 describe("pureGetEdits", () => {
   describe("rename", () => {
+    it("updates the renamed files own links when it is moved", () => {
+      const markdownFiles: FileList = [
+        {
+          path: "file-1.md",
+          content:
+            "[link to a website](http://www.example.com)\n[link to file-2](file-2.md)",
+        },
+        {
+          path: "file-2.md",
+          content: "# Just some markdown file",
+        },
+      ];
+
+      const event: ChangeEvent<"rename"> = {
+        type: "rename",
+        payload: {
+          pathBefore: "file-1.md",
+          pathAfter: "folder/file-1.md",
+        },
+      };
+
+      const edits = pureGetEdits(event, markdownFiles);
+
+      expect(edits).toHaveLength(1);
+      expect(edits[0]).toEqual({
+        path: "folder/file-1.md",
+        range: {
+          start: {
+            line: 1,
+            character: 0,
+          },
+          end: {
+            line: 1,
+            character: 27,
+          },
+        },
+        newText: "[link to file-2](../file-2.md)",
+      });
+    });
+
     it("updates files linking to the renamed file", () => {
       const file1 = {
         path: "file-1.md",
@@ -62,15 +102,17 @@ describe("pureGetEdits", () => {
           payload: {
             path: "/files/foo.md",
             contentBefore: trimLines(`
-          [link](#${oldLink})
+              Link:
+              [link](#${oldLink})
 
-          ## ${oldHeader}
-        `),
+              ## ${oldHeader}
+            `),
             contentAfter: trimLines(`
-          [link](#${oldLink})
+              Link:
+              [link](#${oldLink})
 
-          ## ${newHeader}
-        `),
+              ## ${newHeader}
+            `),
           },
         };
 
@@ -85,11 +127,11 @@ describe("pureGetEdits", () => {
           path: event.payload.path,
           range: {
             start: {
-              line: 0,
+              line: 1,
               character: 0,
             },
             end: {
-              line: 0,
+              line: 1,
               character: `[link](#${oldLink})`.length,
             },
           },
