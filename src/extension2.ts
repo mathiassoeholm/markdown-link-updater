@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { promises as fs } from "fs";
 import { ChangeEventPayload } from "./models";
-import { pureGetEdits } from "./put-get-edits";
+import { pureGetEdits } from "./pure-get-edits";
 import { executeEdits } from "./execute-edits";
 
 function activate(context: vscode.ExtensionContext) {

@@ -1,5 +1,5 @@
 import { ChangeEvent, ChangeEventType, FileList } from "../models";
-import { pureGetEdits } from "../put-get-edits";
+import { pureGetEdits } from "../pure-get-edits";
 
 const trim = (s: string) => s.trim();
 const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
