@@ -36,6 +36,56 @@ function* handleRenameEvent(
   const pathBefore = path.normalize(payload.pathBefore);
   const pathAfter = path.normalize(payload.pathAfter);
 
+  const fileContent = markdownFiles.find(
+    (file) => path.normalize(file.path) === pathAfter
+  )?.content;
+
+  if (!fileContent) {
+    return;
+  }
+
+  let lineNumber = -1;
+  for (const line of fileContent.split("\n")) {
+    lineNumber++;
+
+    const match = mdLinkRegex.exec(line);
+    if (!match) {
+      continue;
+    }
+
+    let [fullMdLink, name, target] = match;
+
+    const targetWithSectionMatch = target.match(/(.+\.md)(#[^\s\/]+)/);
+    let section = "";
+
+    if (targetWithSectionMatch) {
+      target = targetWithSectionMatch[1];
+      section = targetWithSectionMatch[2];
+    }
+
+    const absoluteTarget = path.join(path.dirname(pathBefore), target);
+
+    const newLink = path.normalize(
+      path.relative(path.dirname(pathAfter), absoluteTarget)
+    );
+
+    yield {
+      path: pathAfter,
+      range: {
+        start: {
+          line: lineNumber,
+          character: match.index,
+        },
+        end: {
+          line: lineNumber,
+          character: match.index + fullMdLink.length,
+        },
+      },
+      newText: `[${name}](${newLink.replace(/\\/g, "/")}${section})`,
+      requiresPathToExist: absoluteTarget,
+    };
+  }
+
   for (const markdownFile of markdownFiles) {
     let lineNumber = -1;
     for (const line of markdownFile.content.split("\n")) {

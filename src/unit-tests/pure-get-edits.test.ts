@@ -7,9 +7,17 @@ const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 describe("pureGetEdits", () => {
   describe("rename", () => {
     it("updates the renamed files own links when it is moved", () => {
+      const event: ChangeEvent<"rename"> = {
+        type: "rename",
+        payload: {
+          pathBefore: "file-1.md",
+          pathAfter: "folder/file-1.md",
+        },
+      };
+
       const markdownFiles: FileList = [
         {
-          path: "file-1.md",
+          path: "folder/file-1.md",
           content:
             "[link to a website](http://www.example.com)\n[link to file-2](file-2.md)",
         },
@@ -19,18 +27,20 @@ describe("pureGetEdits", () => {
         },
       ];
 
-      const event: ChangeEvent<"rename"> = {
-        type: "rename",
-        payload: {
-          pathBefore: "file-1.md",
-          pathAfter: "folder/file-1.md",
-        },
-      };
-
       const edits = pureGetEdits(event, markdownFiles);
 
-      expect(edits).toHaveLength(1);
+      expect(edits).toHaveLength(2);
       expect(edits[0]).toEqual({
+        path: "folder/file-1.md",
+        range: {
+          start: { character: 0, line: 0 },
+          end: { character: 43, line: 0 },
+        },
+        newText: "[link to a website](../http:/www.example.com)",
+        // This link will not actually be updated, because it requires this path to exist
+        requiresPathToExist: "http:/www.example.com",
+      });
+      expect(edits[1]).toEqual({
         path: "folder/file-1.md",
         range: {
           start: {
@@ -43,36 +53,36 @@ describe("pureGetEdits", () => {
           },
         },
         newText: "[link to file-2](../file-2.md)",
+        requiresPathToExist: "file-2.md",
       });
     });
 
     it("updates files linking to the renamed file", () => {
-      const file1 = {
-        path: "file-1.md",
-        content:
-          "# File 1\na link [link to file-2](./folder/file-2.md) is here",
-      };
-
-      const file2 = {
-        path: "folder/file-2.md",
-        content: "# Just some markdown file",
-      };
-
       const event: ChangeEvent<"rename"> = {
         type: "rename",
         payload: {
-          pathBefore: file2.path,
+          pathBefore: "folder/file-2.md",
           pathAfter: "folder/new-name.md",
         },
       };
 
-      const markdownFiles: FileList = [file1, file2];
+      const markdownFiles: FileList = [
+        {
+          path: "file-1.md",
+          content:
+            "# File 1\na link [link to file-2](./folder/file-2.md) is here",
+        },
+        {
+          path: "folder/file-2.md",
+          content: "# Just some markdown file",
+        },
+      ];
 
       const edits = pureGetEdits(event, markdownFiles);
 
       expect(edits).toHaveLength(1);
       expect(edits[0]).toEqual({
-        path: file1.path,
+        path: "file-1.md",
         range: {
           start: {
             line: 1,
@@ -83,7 +93,7 @@ describe("pureGetEdits", () => {
             character: 43,
           },
         },
-        newText: `[link to file-2](${event.payload.pathAfter})`,
+        newText: `[link to file-2](folder/new-name.md)`,
       });
     });
   });

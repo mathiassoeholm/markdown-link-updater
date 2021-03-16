@@ -41,4 +41,5 @@ export type Edit = {
     };
   };
   newText: string;
+  requiresPathToExist?: string;
 };
