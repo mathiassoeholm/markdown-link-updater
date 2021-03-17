@@ -40,50 +40,48 @@ function* handleRenameEvent(
     (file) => path.normalize(file.path) === pathAfter
   )?.content;
 
-  if (!fileContent) {
-    return;
-  }
+  if (fileContent) {
+    let lineNumber = -1;
+    for (const line of fileContent.split("\n")) {
+      lineNumber++;
 
-  let lineNumber = -1;
-  for (const line of fileContent.split("\n")) {
-    lineNumber++;
+      const match = mdLinkRegex.exec(line);
+      if (!match) {
+        continue;
+      }
 
-    const match = mdLinkRegex.exec(line);
-    if (!match) {
-      continue;
-    }
+      let [fullMdLink, name, target] = match;
 
-    let [fullMdLink, name, target] = match;
+      const targetWithSectionMatch = target.match(/(.+\.md)(#[^\s\/]+)/);
+      let section = "";
 
-    const targetWithSectionMatch = target.match(/(.+\.md)(#[^\s\/]+)/);
-    let section = "";
+      if (targetWithSectionMatch) {
+        target = targetWithSectionMatch[1];
+        section = targetWithSectionMatch[2];
+      }
 
-    if (targetWithSectionMatch) {
-      target = targetWithSectionMatch[1];
-      section = targetWithSectionMatch[2];
-    }
+      const absoluteTarget = path.join(path.dirname(pathBefore), target);
 
-    const absoluteTarget = path.join(path.dirname(pathBefore), target);
+      const newLink = path.normalize(
+        path.relative(path.dirname(pathAfter), absoluteTarget)
+      );
 
-    const newLink = path.normalize(
-      path.relative(path.dirname(pathAfter), absoluteTarget)
-    );
-
-    yield {
-      path: pathAfter,
-      range: {
-        start: {
-          line: lineNumber,
-          character: match.index,
+      yield {
+        path: pathAfter,
+        range: {
+          start: {
+            line: lineNumber,
+            character: match.index,
+          },
+          end: {
+            line: lineNumber,
+            character: match.index + fullMdLink.length,
+          },
         },
-        end: {
-          line: lineNumber,
-          character: match.index + fullMdLink.length,
-        },
-      },
-      newText: `[${name}](${newLink.replace(/\\/g, "/")}${section})`,
-      requiresPathToExist: absoluteTarget,
-    };
+        newText: `[${name}](${newLink.replace(/\\/g, "/")}${section})`,
+        requiresPathToExist: absoluteTarget,
+      };
+    }
   }
 
   for (const markdownFile of markdownFiles) {

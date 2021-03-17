@@ -117,6 +117,53 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+    it("can update multiple links in the same file", () => {
+      testRename({
+        payload: {
+          pathBefore: "old.txt",
+          pathAfter: "new.txt",
+        },
+        markdownFiles: [
+          {
+            path: "file.md",
+            content: trimLines(`
+              - Link one: [link no. 1](./old.txt)
+              - Link two: [link no. 2](old.txt)
+            `),
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file.md",
+            range: {
+              start: {
+                line: 0,
+                character: 12,
+              },
+              end: {
+                line: 0,
+                character: 35,
+              },
+            },
+            newText: "[link no. 1](new.txt)",
+          },
+          {
+            path: "file.md",
+            range: {
+              start: {
+                line: 1,
+                character: 12,
+              },
+              end: {
+                line: 1,
+                character: 33,
+              },
+            },
+            newText: "[link no. 2](new.txt)",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {
