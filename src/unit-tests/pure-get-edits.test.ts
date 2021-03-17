@@ -73,7 +73,7 @@ describe("pureGetEdits", () => {
             "# File 1\na link [link to file-2](./folder/file-2.md) is here",
         },
         {
-          path: "folder/file-2.md",
+          path: "folder/new-name.md",
           content: "# Just some markdown file",
         },
       ];
