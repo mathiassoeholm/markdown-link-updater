@@ -15,12 +15,14 @@ describe("pureGetEdits", () => {
     interface TestRenameOptions {
       payload: ChangeEventPayload["rename"];
       markdownFiles: FileList;
+      exclude?: string;
       expectedEdits: Edit[];
     }
 
     const testRename = ({
       payload,
       markdownFiles,
+      exclude,
       expectedEdits,
     }: TestRenameOptions) => {
       const event: ChangeEvent<"rename"> = {
@@ -28,7 +30,7 @@ describe("pureGetEdits", () => {
         payload,
       };
 
-      const edits = pureGetEdits(event, markdownFiles);
+      const edits = pureGetEdits(event, markdownFiles, { exclude });
 
       expect(edits).toEqual(expectedEdits);
     };
@@ -162,6 +164,27 @@ describe("pureGetEdits", () => {
             newText: "[link no. 2](new.txt)",
           },
         ],
+      });
+    });
+
+    it("uses exclude glob", () => {
+      testRename({
+        payload: {
+          pathBefore: "node_modules/file-2.md",
+          pathAfter: "node_modules/file-2-changed.md",
+        },
+        markdownFiles: [
+          {
+            path: "file-1.md",
+            content: "[link](node_modules/file-2.md)",
+          },
+          {
+            path: "node_modules/file-2-changed.md",
+            content: "# Just some markdow file",
+          },
+        ],
+        exclude: "**/node_modules/**",
+        expectedEdits: [],
       });
     });
   });

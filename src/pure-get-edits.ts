@@ -13,9 +13,17 @@ import {
 const mdLinkRegex = /\[([^\]]*)\]\(([^\)]+)\)/;
 const targetWithSectionRegex = /(.+\.md)(#[^\s\/]+)/;
 
+interface Options {
+  /**
+   * A glob that defines which files should not be changed or trigger any changes.
+   */
+  exclude?: string;
+}
+
 function pureGetEdits<T extends ChangeEventType>(
   event: ChangeEvent<T>,
-  markdownFiles: FileList
+  markdownFiles: FileList,
+  { exclude }: Options = {}
 ) {
   const result = (() => {
     if (isEventOfType(event, "save")) {
