@@ -4,7 +4,7 @@ import * as fse from "fs-extra";
 import * as path from "path";
 import { exec } from "child_process";
 import { glob } from "glob";
-import * as minimatch from "minimatch";
+import minimatch from "minimatch";
 import { diffLines } from "diff";
 import { headingToAnchor } from "./heading-to-anchor";
 

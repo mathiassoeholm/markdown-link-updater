@@ -3,9 +3,19 @@ import { ChangeEventPayload, FileList } from "./models";
 import { pureGetEdits } from "./pure-get-edits";
 import { executeEdits } from "./execute-edits";
 import { ExtensionContext, workspace } from "vscode";
+import { getOptions } from "./config";
 
 function activate(context: ExtensionContext) {
   let payloads: Array<Partial<ChangeEventPayload["save"]>> = [];
+
+  const getMarkdownFiles = async () => {
+    return await Promise.all(
+      (await workspace.findFiles("**/*.md")).map(async (f) => ({
+        path: f.fsPath,
+        content: await fs.readFile(f.fsPath, "utf-8"),
+      }))
+    );
+  };
 
   const onDidRenameDisposable = workspace.onDidRenameFiles(async (e) => {
     const payloads: Array<ChangeEventPayload["rename"]> = e.files.map(
@@ -16,16 +26,11 @@ function activate(context: ExtensionContext) {
     );
 
     for (const payload of payloads) {
-      const fileListPromises = (await workspace.findFiles("**/*.md")).map(
-        async (f) => ({
-          path: f.fsPath,
-          content: await fs.readFile(f.fsPath, "utf-8"),
-        })
+      const edits = pureGetEdits(
+        { type: "rename", payload },
+        await getMarkdownFiles(),
+        getOptions(payload.pathBefore)
       );
-
-      const markdownFiles = await Promise.all(fileListPromises);
-
-      const edits = pureGetEdits({ type: "rename", payload }, markdownFiles);
 
       await executeEdits(edits);
     }
@@ -52,7 +57,8 @@ function activate(context: ExtensionContext) {
 
       const edits = pureGetEdits(
         { type: "save", payload: payload as ChangeEventPayload["save"] },
-        [] // TODO: Pass in filelist
+        await getMarkdownFiles(),
+        getOptions(payload.path!)
       );
 
       executeEdits(edits);
