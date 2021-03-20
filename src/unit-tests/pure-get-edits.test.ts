@@ -5,32 +5,31 @@ import {
   Edit,
   FileList,
 } from "../models";
-import { pureGetEdits } from "../pure-get-edits";
+import { Options, pureGetEdits } from "../pure-get-edits";
 
 const trim = (s: string) => s.trim();
 const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 
 describe("pureGetEdits", () => {
   describe("rename", () => {
-    interface TestRenameOptions {
+    interface TestRenameOptions extends Partial<Options> {
       payload: ChangeEventPayload["rename"];
       markdownFiles: FileList;
-      exclude?: string;
       expectedEdits: Edit[];
     }
 
     const testRename = ({
       payload,
       markdownFiles,
-      exclude,
       expectedEdits,
+      ...options
     }: TestRenameOptions) => {
       const event: ChangeEvent<"rename"> = {
         type: "rename",
         payload,
       };
 
-      const edits = pureGetEdits(event, markdownFiles, { exclude });
+      const edits = pureGetEdits(event, markdownFiles, options);
 
       expect(edits).toEqual(expectedEdits);
     };
@@ -170,20 +169,45 @@ describe("pureGetEdits", () => {
     it("uses exclude glob", () => {
       testRename({
         payload: {
-          pathBefore: "node_modules/file-2.md",
-          pathAfter: "node_modules/file-2-changed.md",
+          pathBefore: "workspace/node_modules/file-2.md",
+          pathAfter: "workspace/node_modules/file-2-changed.md",
         },
         markdownFiles: [
           {
-            path: "file-1.md",
+            path: "workspace/file-1.md",
             content: "[link](node_modules/file-2.md)",
           },
           {
-            path: "node_modules/file-2-changed.md",
+            path: "workspace/node_modules/file-2-changed.md",
             content: "# Just some markdow file",
           },
         ],
-        exclude: "**/node_modules/**",
+        workspacePath: "workspace/",
+        // Exclude node_modules at any level
+        exclude: ["**/node_modules/**"],
+        expectedEdits: [],
+      });
+    });
+
+    it("uses relative path in exclude", () => {
+      testRename({
+        payload: {
+          pathBefore: "workspace/node_modules/file-2.md",
+          pathAfter: "workspace/node_modules/file-2-changed.md",
+        },
+        markdownFiles: [
+          {
+            path: "workspace/file-1.md",
+            content: "[link](node_modules/file-2.md)",
+          },
+          {
+            path: "workspace/node_modules/file-2-changed.md",
+            content: "# Just some markdow file",
+          },
+        ],
+        workspacePath: "workspace/",
+        // Exclude node_modules at top level
+        exclude: ["node_modules/**"],
         expectedEdits: [],
       });
     });
@@ -224,7 +248,9 @@ describe("pureGetEdits", () => {
           },
         ];
 
-        expect(pureGetEdits(event, markdownFiles)[0]).toEqual({
+        expect(
+          pureGetEdits(event, markdownFiles, { workspacePath: "/" })[0]
+        ).toEqual({
           path: event.payload.path,
           range: {
             start: {

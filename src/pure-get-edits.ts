@@ -1,6 +1,7 @@
 import { diffLines } from "diff";
 import * as path from "path";
 import { headingToAnchor } from "./heading-to-anchor";
+import minimatch from "minimatch";
 import {
   ChangeEvent,
   ChangeEventPayload,
@@ -15,21 +16,25 @@ const targetWithSectionRegex = /(.+\.md)(#[^\s\/]+)/;
 
 interface Options {
   /**
-   * A glob that defines which files should not be changed or trigger any changes.
+   * Array of glob patterns used to exclude specific folders and files.
    */
-  exclude?: string;
+  exclude?: string[];
+  /**
+   * The absolute path of the VS Code workspace.
+   */
+  workspacePath?: string;
 }
 
 function pureGetEdits<T extends ChangeEventType>(
   event: ChangeEvent<T>,
   markdownFiles: FileList,
-  { exclude }: Options = {}
+  options: Options
 ) {
   const result = (() => {
     if (isEventOfType(event, "save")) {
-      return [...handleSaveEvent(event.payload)];
+      return [...handleSaveEvent(event.payload, options)];
     } else if (isEventOfType(event, "rename")) {
-      return [...handleRenameEvent(event.payload, markdownFiles)];
+      return [...handleRenameEvent(event.payload, markdownFiles, options)];
     } else {
       return [];
     }
@@ -39,10 +44,25 @@ function pureGetEdits<T extends ChangeEventType>(
 }
 function* handleRenameEvent(
   payload: ChangeEventPayload["rename"],
-  markdownFiles: FileList
+  markdownFiles: FileList,
+  { exclude = [], workspacePath }: Options
 ): Generator<Edit> {
   const pathBefore = path.normalize(payload.pathBefore);
   const pathAfter = path.normalize(payload.pathAfter);
+
+  const shouldIncludePath = (filePath: string) => {
+    const relativePath = path.relative(workspacePath ?? "", filePath);
+
+    const matchesExcludeList = exclude.some((pattern) => {
+      return minimatch(relativePath, pattern);
+    });
+
+    return !matchesExcludeList;
+  };
+
+  if (!shouldIncludePath(pathBefore)) {
+    return;
+  }
 
   const fileContent = markdownFiles.find(
     (file) => path.normalize(file.path) === pathAfter
@@ -144,7 +164,8 @@ function* handleRenameEvent(
 }
 
 function* handleSaveEvent(
-  payload: ChangeEventPayload["save"]
+  payload: ChangeEventPayload["save"],
+  { exclude }: Options
 ): Generator<Edit> {
   const { contentBefore, contentAfter } = payload;
 
@@ -217,4 +238,4 @@ function* handleSaveEvent(
   }
 }
 
-export { pureGetEdits };
+export { pureGetEdits, Options };
