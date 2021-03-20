@@ -211,6 +211,37 @@ describe("pureGetEdits", () => {
         expectedEdits: [],
       });
     });
+
+    it("updates links with empty text", () => {
+      testRename({
+        payload: {
+          pathBefore: "an-image.svg",
+          pathAfter: "an-image-changed.svg",
+        },
+        markdownFiles: [
+          {
+            path: "file-1.md",
+            content: "![](an-image.svg)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file-1.md",
+            range: {
+              start: {
+                line: 0,
+                character: 1,
+              },
+              end: {
+                line: 0,
+                character: 17,
+              },
+            },
+            newText: "[](an-image-changed.svg)",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {

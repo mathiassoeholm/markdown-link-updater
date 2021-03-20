@@ -1,0 +1,39 @@
+{
+  "Rename test": {
+    "scope": "typescript",
+    "prefix": "rename",
+    "body": [
+      "it(\"$1\", () => {",
+      "  testRename({",
+      "    payload: {",
+      "      pathBefore: \"$2\",",
+      "      pathAfter: \"$3\",",
+      "    },",
+      "    markdownFiles: [",
+      "      {",
+      "        path: \"$4\",",
+      "        content: \"$5\",",
+      "      },",
+      "    ],",
+      "    expectedEdits: [",
+      "      {",
+      "        path: \"$6\",",
+      "        range: {",
+      "          start: {",
+      "            line: $7,",
+      "            character: $8,",
+      "          },",
+      "          end: {",
+      "            line: $9,",
+      "            character: $10,",
+      "          },",
+      "        },",
+      "        newText: \"$11\",",
+      "      }",
+      "    ],",
+      "  });",
+      "});"
+    ],
+    "description": "Log output to console"
+  }
+}
