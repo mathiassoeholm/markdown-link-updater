@@ -303,6 +303,23 @@ describe("pureGetEdits", () => {
         include: ["**/included/**"],
       });
     });
+
+    it("does not process the renamed file if it is outside the include patter", () => {
+      testRename({
+        payload: {
+          pathBefore: "not-included.txt",
+          pathAfter: "not-included-changed.txt",
+        },
+        markdownFiles: [
+          {
+            path: "included/file.md",
+            content: "[](../not-included.txt)",
+          },
+        ],
+        expectedEdits: [],
+        include: ["**/included/**"],
+      });
+    });
   });
 
   describe("save", () => {
