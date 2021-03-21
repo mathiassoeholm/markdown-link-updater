@@ -1,10 +1,4 @@
-import {
-  ChangeEvent,
-  ChangeEventPayload,
-  ChangeEventType,
-  Edit,
-  FileList,
-} from "../models";
+import { ChangeEvent, ChangeEventPayload, Edit, FileList } from "../models";
 import { Options, pureGetEdits } from "../pure-get-edits";
 
 const trim = (s: string) => s.trim();
@@ -12,10 +6,14 @@ const trimLines = (s: string) => s.trim().split("\n").map(trim).join("\n");
 
 describe("pureGetEdits", () => {
   describe("rename", () => {
+    interface CompactEdit extends Omit<Edit, "range"> {
+      range: string;
+    }
+
     interface TestRenameOptions extends Partial<Options> {
       payload: ChangeEventPayload["rename"];
       markdownFiles: FileList;
-      expectedEdits: Edit[];
+      expectedEdits: CompactEdit[];
     }
 
     const testRename = ({
@@ -31,7 +29,29 @@ describe("pureGetEdits", () => {
 
       const edits = pureGetEdits(event, markdownFiles, options);
 
-      expect(edits).toEqual(expectedEdits);
+      expect(edits).toEqual(
+        expectedEdits.map((e) => {
+          const [start, end] = e.range.split("-");
+          const [startLine, startCharacter] = start.split(":");
+          const [endLine, endCharacter] = end.split(":");
+
+          const edit: Edit = {
+            ...e,
+            range: {
+              start: {
+                line: parseInt(startLine),
+                character: parseInt(startCharacter),
+              },
+              end: {
+                line: parseInt(endLine),
+                character: parseInt(endCharacter),
+              },
+            },
+          };
+
+          return edit;
+        })
+      );
     };
 
     it("updates the renamed files own links when it is moved", () => {
@@ -56,26 +76,14 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "folder/file-1.md",
-            range: {
-              start: { character: 0, line: 0 },
-              end: { character: 43, line: 0 },
-            },
+            range: "0:0-0:43",
             newText: "[link to a website](../http:/www.example.com)",
             // This link will not actually be updated, because it requires this path to exist
             requiresPathToExist: "http:/www.example.com",
           },
           {
             path: "folder/file-1.md",
-            range: {
-              start: {
-                line: 1,
-                character: 0,
-              },
-              end: {
-                line: 1,
-                character: 27,
-              },
-            },
+            range: "1:0-1:27",
             newText: "[link to file-2](../file-2.md)",
             requiresPathToExist: "file-2.md",
           },
@@ -103,17 +111,8 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "file-1.md",
-            range: {
-              start: {
-                line: 1,
-                character: 7,
-              },
-              end: {
-                line: 1,
-                character: 43,
-              },
-            },
-            newText: `[link to file-2](folder/new-name.md)`,
+            range: "1:7-1:43",
+            newText: "[link to file-2](folder/new-name.md)",
           },
         ],
       });
@@ -136,30 +135,12 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "file.md",
-            range: {
-              start: {
-                line: 0,
-                character: 12,
-              },
-              end: {
-                line: 0,
-                character: 35,
-              },
-            },
+            range: "0:12-0:35",
             newText: "[link no. 1](new.txt)",
           },
           {
             path: "file.md",
-            range: {
-              start: {
-                line: 1,
-                character: 12,
-              },
-              end: {
-                line: 1,
-                character: 33,
-              },
-            },
+            range: "1:12-1:33",
             newText: "[link no. 2](new.txt)",
           },
         ],
@@ -212,32 +193,40 @@ describe("pureGetEdits", () => {
       });
     });
 
-    it("updates links with empty text", () => {
+    it("works when renaming folders", () => {
       testRename({
         payload: {
-          pathBefore: "an-image.svg",
-          pathAfter: "an-image-changed.svg",
+          pathBefore: "before",
+          pathAfter: "after",
         },
         markdownFiles: [
           {
             path: "file-1.md",
-            content: "![](an-image.svg)",
+            content: trimLines(`
+              [link-1](before/1.txt)
+              [link-2](before/2.txt)
+              [link-3](before/sub/3.txt)
+            `),
           },
         ],
         expectedEdits: [
           {
             path: "file-1.md",
-            range: {
-              start: {
-                line: 0,
-                character: 1,
-              },
-              end: {
-                line: 0,
-                character: 17,
-              },
-            },
-            newText: "[](an-image-changed.svg)",
+            range: "0:0-0:22",
+            newText: "[link-1](after/1.txt)",
+            requiresPathToExist: "after/1.txt",
+          },
+          {
+            path: "file-1.md",
+            range: "1:0-1:22",
+            newText: "[link-2](after/3.txt)",
+            requiresPathToExist: "after/2.txt",
+          },
+          {
+            path: "file-1.md",
+            range: "2:0-2:26",
+            newText: "[link-3](after/sub/3.txt)",
+            requiresPathToExist: "after/sub/3.txt",
           },
         ],
       });
