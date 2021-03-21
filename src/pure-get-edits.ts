@@ -20,6 +20,11 @@ interface Options {
    */
   exclude?: string[];
   /**
+   * Array of glob patterns used to include specific folders and files.
+   * If the array is empty, everything will be included, unless specified by exclude.
+   */
+  include?: string[];
+  /**
    * The absolute path of the VS Code workspace.
    */
   workspacePath?: string;
@@ -45,13 +50,25 @@ function pureGetEdits<T extends ChangeEventType>(
 function* handleRenameEvent(
   payload: ChangeEventPayload["rename"],
   markdownFiles: FileList,
-  { exclude = [], workspacePath }: Options
+  { exclude = [], include = [], workspacePath }: Options
 ): Generator<Edit> {
   const pathBefore = path.normalize(payload.pathBefore);
   const pathAfter = path.normalize(payload.pathAfter);
 
   const shouldIncludePath = (filePath: string) => {
     const relativePath = path.relative(workspacePath ?? "", filePath);
+
+    const matchesIncludeList = include.some((pattern) => {
+      return minimatch(relativePath, pattern);
+    });
+
+    if (matchesIncludeList) {
+      return true;
+    }
+
+    if (include.length > 0) {
+      return false;
+    }
 
     const matchesExcludeList = exclude.some((pattern) => {
       return minimatch(relativePath, pattern);

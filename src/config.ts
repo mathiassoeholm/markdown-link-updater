@@ -10,11 +10,15 @@ const config = {
   get exclude() {
     return getConfig().get<string[]>("exclude", []);
   },
+  get include() {
+    return getConfig().get<string[]>("include", []);
+  },
 };
 
 function getOptions(targetFile: Path): Options {
   return {
     exclude: config.exclude,
+    include: config.include,
     workspacePath: workspace.getWorkspaceFolder(Uri.file(targetFile))?.uri
       .fsPath,
   };
