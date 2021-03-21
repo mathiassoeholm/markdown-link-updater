@@ -276,6 +276,33 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("does not include markdown files outside the include pattern", () => {
+      testRename({
+        payload: {
+          pathBefore: "included/hello.txt",
+          pathAfter: "included/hello-changed.txt",
+        },
+        markdownFiles: [
+          {
+            path: "not-included.md",
+            content: "[](included/hello.txt)",
+          },
+          {
+            path: "included/file.md",
+            content: "[](hello.txt)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "included/file.md",
+            range: "0:0-0:13",
+            newText: "[](hello-changed.txt)",
+          },
+        ],
+        include: ["**/included/**"],
+      });
+    });
   });
 
   describe("save", () => {
