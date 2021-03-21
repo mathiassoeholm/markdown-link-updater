@@ -130,9 +130,16 @@ function* handleRenameEvent(
         target = targetWithSectionMatch[1];
         section = targetWithSectionMatch[2];
       }
-      const isLinkToMovedFile =
-        path.normalize(path.join(path.dirname(markdownFile.path), target)) ===
-        pathBefore;
+
+      const absoluteTarget = path.normalize(
+        path.join(path.dirname(markdownFile.path), target)
+      );
+
+      const isLinkToFileInRenamedFolder = absoluteTarget.startsWith(
+        pathBefore + "/"
+      );
+
+      const isLinkToMovedFile = absoluteTarget === pathBefore;
 
       if (isLinkToMovedFile) {
         const newLink = path.normalize(
@@ -157,6 +164,36 @@ function* handleRenameEvent(
             },
           },
           newText: newFullMdLink,
+        };
+      } else if (isLinkToFileInRenamedFolder) {
+        const newAbsoluteTarget = `${pathAfter}/${absoluteTarget.substring(
+          pathBefore.length + 1
+        )}`;
+
+        const newLink = path.relative(
+          path.dirname(markdownFile.path),
+          newAbsoluteTarget
+        );
+
+        const newFullMdLink = `[${name}](${newLink.replace(
+          /\\/g,
+          "/"
+        )}${section})`;
+
+        yield {
+          path: markdownFile.path,
+          range: {
+            start: {
+              line: lineNumber,
+              character: match.index,
+            },
+            end: {
+              line: lineNumber,
+              character: match.index + fullMdLink.length,
+            },
+          },
+          newText: newFullMdLink,
+          requiresPathToExist: newAbsoluteTarget,
         };
       }
     }

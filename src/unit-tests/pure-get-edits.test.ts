@@ -196,12 +196,12 @@ describe("pureGetEdits", () => {
     it("works when renaming folders", () => {
       testRename({
         payload: {
-          pathBefore: "before",
-          pathAfter: "after",
+          pathBefore: "my/workspace/before",
+          pathAfter: "my/workspace/after",
         },
         markdownFiles: [
           {
-            path: "file-1.md",
+            path: "my/workspace/file-1.md",
             content: trimLines(`
               [link-1](before/1.txt)
               [link-2](before/2.txt)
@@ -209,24 +209,25 @@ describe("pureGetEdits", () => {
             `),
           },
         ],
+        workspacePath: "my/workspace/",
         expectedEdits: [
           {
-            path: "file-1.md",
+            path: "my/workspace/file-1.md",
             range: "0:0-0:22",
             newText: "[link-1](after/1.txt)",
-            requiresPathToExist: "after/1.txt",
+            requiresPathToExist: "my/workspace/after/1.txt",
           },
           {
-            path: "file-1.md",
+            path: "my/workspace/file-1.md",
             range: "1:0-1:22",
-            newText: "[link-2](after/3.txt)",
-            requiresPathToExist: "after/2.txt",
+            newText: "[link-2](after/2.txt)",
+            requiresPathToExist: "my/workspace/after/2.txt",
           },
           {
-            path: "file-1.md",
+            path: "my/workspace/file-1.md",
             range: "2:0-2:26",
             newText: "[link-3](after/sub/3.txt)",
-            requiresPathToExist: "after/sub/3.txt",
+            requiresPathToExist: "my/workspace/after/sub/3.txt",
           },
         ],
       });
