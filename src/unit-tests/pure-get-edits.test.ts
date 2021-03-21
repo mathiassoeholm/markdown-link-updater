@@ -193,6 +193,27 @@ describe("pureGetEdits", () => {
       });
     });
 
+    it("ignores markdown files in excluded directories", () => {
+      testRename({
+        payload: {
+          pathBefore: "hello.txt",
+          pathAfter: "hello-changed.txt",
+        },
+        markdownFiles: [
+          {
+            path: "ignored-1/file-1.md",
+            content: "[](../hello.txt)",
+          },
+          {
+            path: "ignored-2/file-2.md",
+            content: "[](../hello.txt)",
+          },
+        ],
+        exclude: ["**/ignored-1/**", "**/ignored-2/**"],
+        expectedEdits: [],
+      });
+    });
+
     it("works when renaming folders", () => {
       testRename({
         payload: {
@@ -228,6 +249,29 @@ describe("pureGetEdits", () => {
             range: "2:0-2:26",
             newText: "[link-3](after/sub/3.txt)",
             requiresPathToExist: "my/workspace/after/sub/3.txt",
+          },
+        ],
+      });
+    });
+
+    it("can handle folders with names that look like files", () => {
+      testRename({
+        payload: {
+          pathBefore: "folder.txt",
+          pathAfter: "folder-changed.txt",
+        },
+        markdownFiles: [
+          {
+            path: "file-1.md",
+            content: "[hello](folder.txt/subfolder.txt/hello.txt)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file-1.md",
+            range: "0:0-0:43",
+            newText: "[hello](folder-changed.txt/subfolder.txt/hello.txt)",
+            requiresPathToExist: "folder-changed.txt/subfolder.txt/hello.txt",
           },
         ],
       });

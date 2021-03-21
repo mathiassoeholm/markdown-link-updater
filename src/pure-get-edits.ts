@@ -60,6 +60,8 @@ function* handleRenameEvent(
     return !matchesExcludeList;
   };
 
+  markdownFiles = markdownFiles.filter(({ path }) => shouldIncludePath(path));
+
   if (!shouldIncludePath(pathBefore)) {
     return;
   }
