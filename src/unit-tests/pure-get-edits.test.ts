@@ -379,6 +379,32 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("can update links in other files with a section reference", () => {
+      testRename({
+        payload: {
+          pathBefore: "file2.md",
+          pathAfter: "file2-changed.md",
+        },
+        markdownFiles: [
+          {
+            path: "file1.md",
+            content: "[link to file 2](file2.md#Title)",
+          },
+          {
+            path: "file2-changed.md",
+            content: "## Title",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file1.md",
+            range: "0:0-0:32",
+            newText: "[link to file 2](file2-changed.md#Title)",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {
