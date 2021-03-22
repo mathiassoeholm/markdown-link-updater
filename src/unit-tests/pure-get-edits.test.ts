@@ -304,7 +304,7 @@ describe("pureGetEdits", () => {
       });
     });
 
-    it("does not process the renamed file if it is outside the include patter", () => {
+    it("does not process the renamed file if it is outside the include pattern", () => {
       testRename({
         payload: {
           pathBefore: "not-included.txt",
@@ -318,6 +318,65 @@ describe("pureGetEdits", () => {
         ],
         expectedEdits: [],
         include: ["**/included/**"],
+      });
+    });
+
+    it("can use multiple include patterns", () => {
+      testRename({
+        payload: {
+          pathBefore: "included/hello.txt",
+          pathAfter: "included/hello-changed.txt",
+        },
+        markdownFiles: [
+          {
+            path: "included/file.md",
+            content: "[](hello.txt)",
+          },
+          {
+            path: "included-file.md",
+            content: "[](included/hello.txt)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "included/file.md",
+            range: "0:0-0:13",
+            newText: "[](hello-changed.txt)",
+          },
+          {
+            path: "included-file.md",
+            range: "0:0-0:22",
+            newText: "[](included/hello-changed.txt)",
+          },
+        ],
+        include: ["**/included/**", "included-file.md"],
+      });
+    });
+
+    it("updates the renamed files own links with section reference", () => {
+      testRename({
+        payload: {
+          pathBefore: "file-1.md",
+          pathAfter: "folder/file-1.md",
+        },
+        markdownFiles: [
+          {
+            path: "folder/file-1.md",
+            content: "[link to file-2](file-2.md#test)",
+          },
+          {
+            path: "file-2.md",
+            content: "# test",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "folder/file-1.md",
+            range: "0:0-0:32",
+            newText: "[link to file-2](../file-2.md#test)",
+            requiresPathToExist: "file-2.md",
+          },
+        ],
       });
     });
   });

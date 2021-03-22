@@ -18,7 +18,7 @@
       "    expectedEdits: [",
       "      {",
       "        path: \"$6\",",
-      "        range: \"$7\"",
+      "        range: \"$7\",",
       "        newText: \"$8\",",
       "      }",
       "    ],",
