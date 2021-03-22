@@ -3,17 +3,19 @@ import { ChangeEventPayload, FileList } from "./models";
 import { pureGetEdits } from "./pure-get-edits";
 import { executeEdits } from "./execute-edits";
 import { ExtensionContext, workspace } from "vscode";
-import { getOptions } from "./config";
+import { config, getOptions } from "./config";
 
 function activate(context: ExtensionContext) {
   let payloads: Array<Partial<ChangeEventPayload["save"]>> = [];
 
   const getMarkdownFiles = async () => {
     return await Promise.all(
-      (await workspace.findFiles("**/*.md")).map(async (f) => ({
-        path: f.fsPath,
-        content: await fs.readFile(f.fsPath, "utf-8"),
-      }))
+      (await workspace.findFiles("**/*.md", config.exclude.join(","))).map(
+        async (f) => ({
+          path: f.fsPath,
+          content: await fs.readFile(f.fsPath, "utf-8"),
+        })
+      )
     );
   };
 

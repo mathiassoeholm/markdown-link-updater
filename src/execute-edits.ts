@@ -1,10 +1,18 @@
 import { pathExistsSync } from "fs-extra";
-import { Position, Range, Uri, workspace, WorkspaceEdit } from "vscode";
+import { Position, Range, Uri, window, workspace, WorkspaceEdit } from "vscode";
 import { Edit } from "./models";
 
 async function executeEdits(edits: Edit[]) {
   for (const edit of edits) {
     await executeEdit(edit);
+  }
+
+  if (edits.length > 1) {
+    window.showInformationMessage(`Updated ${edits.length} Markdown links.`);
+  } else if (edits.length === 1) {
+    window.showInformationMessage(
+      `Updated a Markdown link in ${workspace.asRelativePath(edits[0].path)}`
+    );
   }
 }
 
