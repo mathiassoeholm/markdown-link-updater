@@ -14,7 +14,6 @@ This extension contributes the following settings:
 
 - `markdownLinkUpdater.exclude`: Array of glob patterns used to exclude specific folders and files. Default value is `['**/node_modules/**']`.
 - `markdownLinkUpdater.include`: Array of glob patterns use to include specific folders and files. If the array is empty, everything will be included, unless specified by exclude. Default value is `[]`.
-- `markdownLinkUpdater.slowUseGitIgnore`: Skip files that are ignored by git. This can be SLOW on large projects, so it is encouraged to activate it on a per project basis. Default value is `false`.
 
 ## Release Notes
 
