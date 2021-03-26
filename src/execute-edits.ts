@@ -3,16 +3,28 @@ import { Position, Range, Uri, window, workspace, WorkspaceEdit } from "vscode";
 import { Edit } from "./models";
 
 async function executeEdits(edits: Edit[]) {
-  for (const edit of edits) {
-    await executeEdit(edit);
-  }
+  const shouldExecute =
+    edits.length > 5
+      ? await window.showInformationMessage(
+          `Update ${edits.length} Markdown links?`,
+          { modal: true },
+          "Yes",
+          "No"
+        )
+      : "Yes";
 
-  if (edits.length > 1) {
-    window.showInformationMessage(`Updated ${edits.length} Markdown links.`);
-  } else if (edits.length === 1) {
-    window.showInformationMessage(
-      `Updated a Markdown link in ${workspace.asRelativePath(edits[0].path)}`
-    );
+  if (shouldExecute === "Yes") {
+    for (const edit of edits) {
+      await executeEdit(edit);
+    }
+
+    if (edits.length > 1) {
+      window.showInformationMessage(`Updated ${edits.length} Markdown links.`);
+    } else if (edits.length === 1) {
+      window.showInformationMessage(
+        `Updated a Markdown link in ${workspace.asRelativePath(edits[0].path)}`
+      );
+    }
   }
 }
 
