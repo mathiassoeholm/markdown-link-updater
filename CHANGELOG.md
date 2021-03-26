@@ -1,5 +1,14 @@
 # Change Log
 
+## [2.0.0]
+
+- Apply edits with `workspace.applyEdit`, allowing undo to work and the file to be modified but not saved.
+- Large code refactoring, enabling better tests.
+- Information messages showing that links changed.
+- Confirmation popup, when more than 5 links are updated.
+- Removed the `experimentalRenameHeadings` setting, as that feature is now on by default.
+- Removed the `slowUseGitIgnore` settings.
+
 ## [1.2.2]
 
 - Internal links to headers now work correctly with punctuation and foreign characters.
