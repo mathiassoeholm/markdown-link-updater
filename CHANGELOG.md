@@ -1,5 +1,10 @@
 # Change Log
 
+## [2.0.1]
+
+- Only show info messages for links that actually changes.
+- Don't modify a file if the links are unchanged.
+
 ## [2.0.0]
 
 - Apply edits with `workspace.applyEdit`, allowing undo to work and the file to be modified but not saved.
