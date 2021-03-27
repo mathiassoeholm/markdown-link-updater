@@ -113,6 +113,12 @@ function* handleRenameEvent(
         path.relative(path.dirname(pathAfter), absoluteTarget)
       );
 
+      const targetIsUnmodified = path.normalize(target) === newLink;
+
+      if (targetIsUnmodified) {
+        continue;
+      }
+
       yield {
         path: pathAfter,
         range: {

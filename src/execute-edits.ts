@@ -3,6 +3,11 @@ import { Position, Range, Uri, window, workspace, WorkspaceEdit } from "vscode";
 import { Edit } from "./models";
 
 async function executeEdits(edits: Edit[]) {
+  edits = edits.filter(
+    (edit) =>
+      !edit.requiresPathToExist || pathExistsSync(edit.requiresPathToExist)
+  );
+
   const shouldExecute =
     edits.length > 5
       ? await window.showInformationMessage(
@@ -29,10 +34,6 @@ async function executeEdits(edits: Edit[]) {
 }
 
 async function executeEdit(edit: Edit) {
-  if (edit.requiresPathToExist && !pathExistsSync(edit.requiresPathToExist)) {
-    return;
-  }
-
   const workspaceEdit = new WorkspaceEdit();
   const range = new Range(
     new Position(edit.range.start.line, edit.range.start.character),
@@ -44,4 +45,4 @@ async function executeEdit(edit: Edit) {
   await workspace.applyEdit(workspaceEdit);
 }
 
-export { executeEdit, executeEdits };
+export { executeEdits };

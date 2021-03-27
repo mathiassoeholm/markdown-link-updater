@@ -405,6 +405,22 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("does not produce an edit if the link is unmodified", () => {
+      testRename({
+        payload: {
+          pathBefore: "file-1.md",
+          pathAfter: "file-1-renamed.md",
+        },
+        markdownFiles: [
+          {
+            path: "file-1-renamed.md",
+            content: "![](./image.png)",
+          },
+        ],
+        expectedEdits: [],
+      });
+    });
   });
 
   describe("save", () => {
