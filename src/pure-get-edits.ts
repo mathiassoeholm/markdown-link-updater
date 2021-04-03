@@ -161,7 +161,7 @@ function* handleRenameEvent(
       );
 
       const isLinkToFileInRenamedFolder = absoluteTarget.startsWith(
-        pathBefore + "/"
+        pathBefore + path.sep
       );
 
       const isLinkToMovedFile = absoluteTarget === pathBefore;
