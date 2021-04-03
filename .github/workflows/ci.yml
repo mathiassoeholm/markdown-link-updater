@@ -1,0 +1,18 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+  push:
+    branches: main
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@main
+      - uses: bahmutov/npm-install@v1
+      - run: yarn test
