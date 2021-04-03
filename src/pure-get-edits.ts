@@ -52,11 +52,11 @@ function* handleRenameEvent(
   markdownFiles: FileList,
   { exclude = [], include = [], workspacePath }: Options
 ): Generator<Edit> {
-  const pathBefore = path.normalize(payload.pathBefore);
-  const pathAfter = path.normalize(payload.pathAfter);
+  const pathBefore = path.posix.normalize(windowsToPosix(payload.pathBefore));
+  const pathAfter = path.posix.normalize(windowsToPosix(payload.pathAfter));
 
   const shouldIncludePath = (filePath: string) => {
-    const relativePath = path.relative(workspacePath ?? "", filePath);
+    const relativePath = path.posix.relative(workspacePath ?? "", filePath);
 
     const matchesIncludeList = include.some((pattern) => {
       return minimatch(relativePath, pattern);
@@ -77,14 +77,16 @@ function* handleRenameEvent(
     return !matchesExcludeList;
   };
 
-  markdownFiles = markdownFiles.filter(({ path }) => shouldIncludePath(path));
+  markdownFiles = markdownFiles
+    .map((file) => ({ ...file, path: windowsToPosix(file.path) }))
+    .filter(({ path }) => shouldIncludePath(path));
 
   if (!shouldIncludePath(pathBefore)) {
     return;
   }
 
   const fileContent = markdownFiles.find(
-    (file) => path.normalize(file.path) === pathAfter
+    (file) => path.posix.normalize(file.path) === pathAfter
   )?.content;
 
   if (fileContent) {
@@ -107,13 +109,16 @@ function* handleRenameEvent(
         section = targetWithSectionMatch[2];
       }
 
-      const absoluteTarget = path.join(path.dirname(pathBefore), target);
-
-      const newLink = path.normalize(
-        path.relative(path.dirname(pathAfter), absoluteTarget)
+      const absoluteTarget = path.posix.join(
+        path.posix.dirname(pathBefore),
+        target
       );
 
-      const targetIsUnmodified = path.normalize(target) === newLink;
+      const newLink = path.posix.normalize(
+        path.posix.relative(path.posix.dirname(pathAfter), absoluteTarget)
+      );
+
+      const targetIsUnmodified = path.posix.normalize(target) === newLink;
 
       if (targetIsUnmodified) {
         continue;
@@ -131,7 +136,7 @@ function* handleRenameEvent(
             character: match.index + fullMdLink.length,
           },
         },
-        newText: `[${name}](${newLink.replace(/\\/g, "/")}${section})`,
+        newText: `[${name}](${newLink}${section})`,
         requiresPathToExist: absoluteTarget,
       };
     }
@@ -156,25 +161,22 @@ function* handleRenameEvent(
         section = targetWithSectionMatch[2];
       }
 
-      const absoluteTarget = path.normalize(
-        path.join(path.dirname(markdownFile.path), target)
+      const absoluteTarget = path.posix.normalize(
+        path.posix.join(path.posix.dirname(markdownFile.path), target)
       );
 
       const isLinkToFileInRenamedFolder = absoluteTarget.startsWith(
-        pathBefore + path.sep
+        pathBefore + path.posix.sep
       );
 
       const isLinkToMovedFile = absoluteTarget === pathBefore;
 
       if (isLinkToMovedFile) {
-        const newLink = path.normalize(
-          path.relative(path.dirname(markdownFile.path), pathAfter)
+        const newLink = path.posix.normalize(
+          path.posix.relative(path.posix.dirname(markdownFile.path), pathAfter)
         );
 
-        const newFullMdLink = `[${name}](${newLink.replace(
-          /\\/g,
-          "/"
-        )}${section})`;
+        const newFullMdLink = `[${name}](${newLink}${section})`;
 
         yield {
           path: markdownFile.path,
@@ -195,15 +197,12 @@ function* handleRenameEvent(
           pathBefore.length + 1
         )}`;
 
-        const newLink = path.relative(
-          path.dirname(markdownFile.path),
+        const newLink = path.posix.relative(
+          path.posix.dirname(markdownFile.path),
           newAbsoluteTarget
         );
 
-        const newFullMdLink = `[${name}](${newLink.replace(
-          /\\/g,
-          "/"
-        )}${section})`;
+        const newFullMdLink = `[${name}](${newLink}${section})`;
 
         yield {
           path: markdownFile.path,
@@ -299,5 +298,9 @@ function* handleSaveEvent(
     lineNumber++;
   }
 }
+
+const windowsToPosix = (path: string) => {
+  return path.replace(/\\/g, "/");
+};
 
 export { pureGetEdits, Options };

@@ -421,6 +421,33 @@ describe("pureGetEdits", () => {
         expectedEdits: [],
       });
     });
+
+    it("converts Windows paths to POSIX", () => {
+      testRename({
+        payload: {
+          pathBefore: "folder\\file-2.md",
+          pathAfter: "folder\\new-name.md",
+        },
+        markdownFiles: [
+          {
+            path: "file-1.md",
+            content:
+              "# File 1\na link [link to file-2](./folder/file-2.md) is here",
+          },
+          {
+            path: "folder\\new-name.md",
+            content: "# Just some markdown file",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file-1.md",
+            range: "1:7-1:43",
+            newText: "[link to file-2](folder/new-name.md)",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {
