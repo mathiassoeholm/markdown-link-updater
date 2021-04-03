@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.0.2]
+
+- Fixed [#6](https://github.com/mathiassoeholm/markdown-link-updater/issues/6), where it didn't change links after renaming a folder on Windows. Thanks to Higurashi-kagome.
+
 ## [2.0.1]
 
 - Only show info messages for links that actually changes.
