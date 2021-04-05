@@ -448,6 +448,61 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it.only("updates the src attribute on img tags", () => {
+      testRename({
+        payload: {
+          pathBefore: "image.png",
+          pathAfter: "folder/image.png",
+        },
+        markdownFiles: [
+          {
+            path: "file-1.md",
+            content: `<img src="image.png" />`,
+          },
+          {
+            path: "folder/file-2.md",
+            content: trimLines(`
+              # Header
+              <img
+                alt="some image"
+                src="../image.png"
+              ></img>
+            `),
+          },
+          {
+            path: "file-2.md",
+            content: trimLines(`
+              # Two links
+              <img src="image.png" />
+              <img src="image.png" />
+            `),
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file-1.md",
+            range: "0:10-0:19",
+            newText: "folder/image.png",
+          },
+          {
+            path: "folder/file-2.md",
+            range: "3:5-3:12",
+            newText: "image.png",
+          },
+          {
+            path: "file-3.md",
+            range: "1:10-1:19",
+            newText: "folder/image.png",
+          },
+          {
+            path: "file-3.md",
+            range: "2:10-2:19",
+            newText: "folder/image.png",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {
