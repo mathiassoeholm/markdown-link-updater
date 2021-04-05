@@ -101,7 +101,7 @@ describe("pureGetEdits", () => {
           {
             path: "file-1.md",
             content:
-              "# File 1\na link [link to file-2](./folder/file-2.md) is here",
+              "# File 1\na link [link to file-2](folder/file-2.md) is here",
           },
           {
             path: "folder/new-name.md",
@@ -111,8 +111,8 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "file-1.md",
-            range: "1:7-1:43",
-            newText: "[link to file-2](folder/new-name.md)",
+            range: "1:24-1:40",
+            newText: "folder/new-name.md",
           },
         ],
       });
@@ -449,7 +449,7 @@ describe("pureGetEdits", () => {
       });
     });
 
-    it.only("updates the src attribute on img tags", () => {
+    it("updates the src attribute on img tags", () => {
       testRename({
         payload: {
           pathBefore: "image.png",
