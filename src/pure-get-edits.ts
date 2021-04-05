@@ -13,6 +13,7 @@ import {
 
 const mdLinkRegex = /\[([^\]]*)\]\(([^\)]+)\)/;
 const targetWithSectionRegex = /(.+\.md)(#[^\s\/]+)/;
+const imgRegex = /<img\s[^>]*?src\s*=\s*['\"]([^'\"]*?)['\"][^>]*?>/gm;
 
 interface Options {
   /**
@@ -143,6 +144,11 @@ function* handleRenameEvent(
   }
 
   for (const markdownFile of markdownFiles) {
+    imgRegex.lastIndex = 0;
+    const imgMatches = imgRegex.exec(markdownFile.content);
+    console.log((imgMatches as any)?.indices);
+    debugger;
+
     let lineNumber = -1;
     for (const line of markdownFile.content.split("\n")) {
       lineNumber++;
