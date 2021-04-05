@@ -12,8 +12,9 @@ import {
 } from "./models";
 
 const mdLinkRegex = /\[([^\]]*)\]\(([^\)]+)\)/;
+const mdLinkRegexGlobal = /(\[[^\]]*\]\()([^\)]+)\)/gm;
 const targetWithSectionRegex = /(.+\.md)(#[^\s\/]+)/;
-const imgRegex = /<img\s[^>]*?src\s*=\s*['\"]([^'\"]*?)['\"][^>]*?>/gm;
+const imgRegex = /(<img\s[^>]*?src\s*=\s*['\"])([^'\"]*?)['\"][^>]*?>/gm;
 
 interface Options {
   /**
@@ -145,20 +146,29 @@ function* handleRenameEvent(
 
   for (const markdownFile of markdownFiles) {
     imgRegex.lastIndex = 0;
-    const imgMatches = imgRegex.exec(markdownFile.content);
-    console.log((imgMatches as any)?.indices);
-    debugger;
+    let imgMatches;
+    while ((imgMatches = imgRegex.exec(markdownFile.content)) !== null) {
+      const index = imgMatches.index + imgMatches[1].length;
+      const lines = markdownFile.content.substring(0, index).split("\n");
+      const line = lines.length - 1;
+      const col = lines[line].length;
 
-    let lineNumber = -1;
-    for (const line of markdownFile.content.split("\n")) {
-      lineNumber++;
+      // target,start,end,getText(newLink)
 
-      const match = mdLinkRegex.exec(line);
-      if (!match) {
-        continue;
-      }
+      console.log(line, col);
+    }
 
-      let [fullMdLink, name, target] = match;
+    mdLinkRegexGlobal.lastIndex = 0;
+    let mdLinkMatch: RegExpExecArray | null;
+    while (
+      (mdLinkMatch = mdLinkRegexGlobal.exec(markdownFile.content)) !== null
+    ) {
+      let [fullMdLink, prefix, target] = mdLinkMatch;
+      const index = mdLinkMatch.index + prefix.length;
+      const lines = markdownFile.content.substring(0, index).split("\n");
+      const line = lines.length - 1;
+      const col = lines[line].length;
+
       const targetWithSectionMatch = target.match(targetWithSectionRegex);
       let section = "";
 
@@ -182,21 +192,19 @@ function* handleRenameEvent(
           path.posix.relative(path.posix.dirname(markdownFile.path), pathAfter)
         );
 
-        const newFullMdLink = `[${name}](${newLink}${section})`;
-
         yield {
           path: markdownFile.path,
           range: {
             start: {
-              line: lineNumber,
-              character: match.index,
+              line,
+              character: col,
             },
             end: {
-              line: lineNumber,
-              character: match.index + fullMdLink.length,
+              line: line,
+              character: col + target.length,
             },
           },
-          newText: newFullMdLink,
+          newText: newLink,
         };
       } else if (isLinkToFileInRenamedFolder) {
         const newAbsoluteTarget = `${pathAfter}/${absoluteTarget.substring(
@@ -208,21 +216,19 @@ function* handleRenameEvent(
           newAbsoluteTarget
         );
 
-        const newFullMdLink = `[${name}](${newLink}${section})`;
-
         yield {
           path: markdownFile.path,
           range: {
             start: {
-              line: lineNumber,
-              character: match.index,
+              line,
+              character: col,
             },
             end: {
-              line: lineNumber,
-              character: match.index + fullMdLink.length,
+              line,
+              character: col + newLink.length,
             },
           },
-          newText: newFullMdLink,
+          newText: newLink,
           requiresPathToExist: newAbsoluteTarget,
         };
       }
