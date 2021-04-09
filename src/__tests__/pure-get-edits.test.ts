@@ -76,15 +76,15 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "folder/file-1.md",
-            range: "0:0-0:43",
-            newText: "[link to a website](../http:/www.example.com)",
+            range: "0:20-0:42",
+            newText: "../http:/www.example.com",
             // This link will not actually be updated, because it requires this path to exist
             requiresPathToExist: "http:/www.example.com",
           },
           {
             path: "folder/file-1.md",
-            range: "1:0-1:27",
-            newText: "[link to file-2](../file-2.md)",
+            range: "1:17-1:26",
+            newText: "../file-2.md",
             requiresPathToExist: "file-2.md",
           },
         ],
@@ -372,8 +372,8 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "folder/file-1.md",
-            range: "0:0-0:32",
-            newText: "[link to file-2](../file-2.md#test)",
+            range: "0:17-0:26",
+            newText: "../file-2.md",
             requiresPathToExist: "file-2.md",
           },
         ],
@@ -444,6 +444,62 @@ describe("pureGetEdits", () => {
             path: "file-1.md",
             range: "1:24-1:42",
             newText: "folder/new-name.md",
+          },
+        ],
+      });
+    });
+
+    it("updates two links on the same line", () => {
+      testRename({
+        payload: {
+          pathBefore: "img.png",
+          pathAfter: "pic.png",
+        },
+        markdownFiles: [
+          {
+            path: "file.md",
+            content: "![](img.png) and ![](img.png)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file.md",
+            range: "0:4-0:11",
+            newText: "pic.png",
+          },
+          {
+            path: "file.md",
+            range: "0:21-0:28",
+            newText: "pic.png",
+          },
+        ],
+      });
+    });
+
+    it("updates its own two links on the same line", () => {
+      testRename({
+        payload: {
+          pathBefore: "file.md",
+          pathAfter: "folder/file.md",
+        },
+        markdownFiles: [
+          {
+            path: "folder/file.md",
+            content: "![](img1.png) and ![](img2.png)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "folder/file.md",
+            range: "0:4-0:12",
+            newText: "../img1.png",
+            requiresPathToExist: "img1.png",
+          },
+          {
+            path: "folder/file.md",
+            range: "0:22-0:30",
+            newText: "../img2.png",
+            requiresPathToExist: "img2.png",
           },
         ],
       });
