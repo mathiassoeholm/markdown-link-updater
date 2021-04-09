@@ -135,13 +135,13 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "file.md",
-            range: "0:12-0:35",
-            newText: "[link no. 1](new.txt)",
+            range: "0:25-0:34",
+            newText: "new.txt",
           },
           {
             path: "file.md",
-            range: "1:12-1:33",
-            newText: "[link no. 2](new.txt)",
+            range: "1:25-1:32",
+            newText: "new.txt",
           },
         ],
       });
@@ -234,20 +234,20 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "my/workspace/file-1.md",
-            range: "0:0-0:22",
-            newText: "[link-1](after/1.txt)",
+            range: "0:9-0:21",
+            newText: "after/1.txt",
             requiresPathToExist: "my/workspace/after/1.txt",
           },
           {
             path: "my/workspace/file-1.md",
-            range: "1:0-1:22",
-            newText: "[link-2](after/2.txt)",
+            range: "1:9-1:21",
+            newText: "after/2.txt",
             requiresPathToExist: "my/workspace/after/2.txt",
           },
           {
             path: "my/workspace/file-1.md",
-            range: "2:0-2:26",
-            newText: "[link-3](after/sub/3.txt)",
+            range: "2:9-2:25",
+            newText: "after/sub/3.txt",
             requiresPathToExist: "my/workspace/after/sub/3.txt",
           },
         ],
@@ -269,8 +269,8 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "file-1.md",
-            range: "0:0-0:43",
-            newText: "[hello](folder-changed.txt/subfolder.txt/hello.txt)",
+            range: "0:8-0:42",
+            newText: "folder-changed.txt/subfolder.txt/hello.txt",
             requiresPathToExist: "folder-changed.txt/subfolder.txt/hello.txt",
           },
         ],
@@ -296,8 +296,8 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "included/file.md",
-            range: "0:0-0:13",
-            newText: "[](hello-changed.txt)",
+            range: "0:3-0:12",
+            newText: "hello-changed.txt",
           },
         ],
         include: ["**/included/**"],
@@ -340,13 +340,13 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "included/file.md",
-            range: "0:0-0:13",
-            newText: "[](hello-changed.txt)",
+            range: "0:3-0:12",
+            newText: "hello-changed.txt",
           },
           {
             path: "included-file.md",
-            range: "0:0-0:22",
-            newText: "[](included/hello-changed.txt)",
+            range: "0:3-0:21",
+            newText: "included/hello-changed.txt",
           },
         ],
         include: ["**/included/**", "included-file.md"],
@@ -399,8 +399,8 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "file1.md",
-            range: "0:0-0:32",
-            newText: "[link to file 2](file2-changed.md#Title)",
+            range: "0:17-0:25",
+            newText: "file2-changed.md",
           },
         ],
       });
@@ -442,8 +442,8 @@ describe("pureGetEdits", () => {
         expectedEdits: [
           {
             path: "file-1.md",
-            range: "1:7-1:43",
-            newText: "[link to file-2](folder/new-name.md)",
+            range: "1:24-1:42",
+            newText: "folder/new-name.md",
           },
         ],
       });
