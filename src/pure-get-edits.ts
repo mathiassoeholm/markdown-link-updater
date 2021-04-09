@@ -12,8 +12,7 @@ import {
 } from "./models";
 
 const mdLinkRegex = /\[([^\]]*)\]\(([^\)]+)\)/;
-const mdLinkRegexGlobal = /(\[[^\]]*\]\()([^\)]+)\)/gm;
-const targetWithSectionRegex = /(.+\.md)(#[^\s\/]+)/;
+const mdLinkRegexGlobal = /(\[[^\]]*\]\()([^\)]+?)(#[^\s\/]+)?\)/gm;
 const imgRegex = /(<img\s[^>]*?src\s*=\s*['\"])([^'\"]*?)['\"][^>]*?>/gm;
 
 interface Options {
@@ -168,14 +167,6 @@ function* handleRenameEvent(
       const lines = markdownFile.content.substring(0, index).split("\n");
       const line = lines.length - 1;
       const col = lines[line].length;
-
-      const targetWithSectionMatch = target.match(targetWithSectionRegex);
-      let section = "";
-
-      if (targetWithSectionMatch) {
-        target = targetWithSectionMatch[1];
-        section = targetWithSectionMatch[2];
-      }
 
       const absoluteTarget = path.posix.normalize(
         path.posix.join(path.posix.dirname(markdownFile.path), target)
