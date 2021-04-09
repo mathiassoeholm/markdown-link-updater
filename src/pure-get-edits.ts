@@ -225,7 +225,7 @@ function* handleRenameEvent(
             },
             end: {
               line,
-              character: col + newLink.length,
+              character: col + target.length,
             },
           },
           newText: newLink,
