@@ -91,24 +91,14 @@ function* handleRenameEvent(
   )?.content;
 
   if (fileContent) {
-    let lineNumber = -1;
-    for (const line of fileContent.split("\n")) {
-      lineNumber++;
-
-      const match = mdLinkRegex.exec(line);
-      if (!match) {
-        continue;
-      }
-
-      let [fullMdLink, name, target] = match;
-
-      const targetWithSectionMatch = target.match(/(.+\.md)(#[^\s\/]+)/);
-      let section = "";
-
-      if (targetWithSectionMatch) {
-        target = targetWithSectionMatch[1];
-        section = targetWithSectionMatch[2];
-      }
+    mdLinkRegexGlobal.lastIndex = 0;
+    let mdLinkMatch: RegExpExecArray | null;
+    while ((mdLinkMatch = mdLinkRegexGlobal.exec(fileContent)) !== null) {
+      let [fullMdLink, prefix, target] = mdLinkMatch;
+      const index = mdLinkMatch.index + prefix.length;
+      const lines = fileContent.substring(0, index).split("\n");
+      const line = lines.length - 1;
+      const col = lines[line].length;
 
       const absoluteTarget = path.posix.join(
         path.posix.dirname(pathBefore),
@@ -129,15 +119,15 @@ function* handleRenameEvent(
         path: pathAfter,
         range: {
           start: {
-            line: lineNumber,
-            character: match.index,
+            line,
+            character: col,
           },
           end: {
-            line: lineNumber,
-            character: match.index + fullMdLink.length,
+            line: line,
+            character: col + target.length,
           },
         },
-        newText: `[${name}](${newLink}${section})`,
+        newText: newLink,
         requiresPathToExist: absoluteTarget,
       };
     }
