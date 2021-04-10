@@ -559,6 +559,45 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("updates the src attribute on img tags in the renamed file", () => {
+      testRename({
+        payload: {
+          pathBefore: "folder/file.md",
+          pathAfter: "file.md",
+        },
+        markdownFiles: [
+          {
+            path: "file.md",
+            content: trimLines(`
+              # Some pictures
+              <img src="img1.jpg" /><img src="img2.jpg" />
+              <img alt="lovely image" src="img3.jpg"></img>
+            `),
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file.md",
+            range: "1:10-1:18",
+            newText: "folder/img1.jpg",
+            requiresPathToExist: "folder/img1.jpg",
+          },
+          {
+            path: "file.md",
+            range: "1:32-1:40",
+            newText: "folder/img2.jpg",
+            requiresPathToExist: "folder/img2.jpg",
+          },
+          {
+            path: "file.md",
+            range: "2:29-2:37",
+            newText: "folder/img3.jpg",
+            requiresPathToExist: "folder/img3.jpg",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {
