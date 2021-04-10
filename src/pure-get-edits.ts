@@ -90,7 +90,7 @@ function* handleRenameEvent(
     (file) => path.posix.normalize(file.path) === pathAfter
   )?.content;
 
-  for (const { target, line, col } of getMarkdownLinks(fileContent)) {
+  for (const { target, line, col } of getAllLinks(fileContent)) {
     const absoluteTarget = path.posix.join(
       path.posix.dirname(pathBefore),
       target
@@ -124,22 +124,7 @@ function* handleRenameEvent(
   }
 
   for (const markdownFile of markdownFiles) {
-    imgRegex.lastIndex = 0;
-    let imgMatches;
-    while ((imgMatches = imgRegex.exec(markdownFile.content)) !== null) {
-      const index = imgMatches.index + imgMatches[1].length;
-      const lines = markdownFile.content.substring(0, index).split("\n");
-      const line = lines.length - 1;
-      const col = lines[line].length;
-
-      // target,start,end,getText(newLink)
-
-      console.log(line, col);
-    }
-
-    for (const { target, line, col } of getMarkdownLinks(
-      markdownFile.content
-    )) {
+    for (const { target, line, col } of getAllLinks(markdownFile.content)) {
       const absoluteTarget = path.posix.normalize(
         path.posix.join(path.posix.dirname(markdownFile.path), target)
       );
@@ -274,6 +259,11 @@ function* handleSaveEvent(
   }
 }
 
+function* getAllLinks(fileContent: string | undefined) {
+  yield* getMarkdownLinks(fileContent);
+  yield* getImgTags(fileContent);
+}
+
 function* getMarkdownLinks(fileContent: string | undefined) {
   if (!fileContent) {
     return;
@@ -289,7 +279,28 @@ function* getMarkdownLinks(fileContent: string | undefined) {
     const col = lines[line].length;
 
     yield {
-      fullMdLink,
+      target,
+      line,
+      col,
+    };
+  }
+}
+
+function* getImgTags(fileContent: string | undefined) {
+  if (!fileContent) {
+    return;
+  }
+
+  imgRegex.lastIndex = 0;
+  let imgMatch: RegExpExecArray | null;
+  while ((imgMatch = imgRegex.exec(fileContent)) !== null) {
+    const [fullMatch, prefix, target] = imgMatch;
+    const index = imgMatch.index + prefix.length;
+    const lines = fileContent.substring(0, index).split("\n");
+    const line = lines.length - 1;
+    const col = lines[line].length;
+
+    yield {
       target,
       line,
       col,
