@@ -90,47 +90,37 @@ function* handleRenameEvent(
     (file) => path.posix.normalize(file.path) === pathAfter
   )?.content;
 
-  if (fileContent) {
-    mdLinkRegexGlobal.lastIndex = 0;
-    let mdLinkMatch: RegExpExecArray | null;
-    while ((mdLinkMatch = mdLinkRegexGlobal.exec(fileContent)) !== null) {
-      let [fullMdLink, prefix, target] = mdLinkMatch;
-      const index = mdLinkMatch.index + prefix.length;
-      const lines = fileContent.substring(0, index).split("\n");
-      const line = lines.length - 1;
-      const col = lines[line].length;
+  for (const { target, line, col } of getMarkdownLinks(fileContent)) {
+    const absoluteTarget = path.posix.join(
+      path.posix.dirname(pathBefore),
+      target
+    );
 
-      const absoluteTarget = path.posix.join(
-        path.posix.dirname(pathBefore),
-        target
-      );
+    const newLink = path.posix.normalize(
+      path.posix.relative(path.posix.dirname(pathAfter), absoluteTarget)
+    );
 
-      const newLink = path.posix.normalize(
-        path.posix.relative(path.posix.dirname(pathAfter), absoluteTarget)
-      );
+    const targetIsUnmodified = path.posix.normalize(target) === newLink;
 
-      const targetIsUnmodified = path.posix.normalize(target) === newLink;
-
-      if (targetIsUnmodified) {
-        continue;
-      }
-
-      yield {
-        path: pathAfter,
-        range: {
-          start: {
-            line,
-            character: col,
-          },
-          end: {
-            line: line,
-            character: col + target.length,
-          },
-        },
-        newText: newLink,
-        requiresPathToExist: absoluteTarget,
-      };
+    if (targetIsUnmodified) {
+      continue;
     }
+
+    yield {
+      path: pathAfter,
+      range: {
+        start: {
+          line,
+          character: col,
+        },
+        end: {
+          line: line,
+          character: col + target.length,
+        },
+      },
+      newText: newLink,
+      requiresPathToExist: absoluteTarget,
+    };
   }
 
   for (const markdownFile of markdownFiles) {
@@ -147,17 +137,9 @@ function* handleRenameEvent(
       console.log(line, col);
     }
 
-    mdLinkRegexGlobal.lastIndex = 0;
-    let mdLinkMatch: RegExpExecArray | null;
-    while (
-      (mdLinkMatch = mdLinkRegexGlobal.exec(markdownFile.content)) !== null
-    ) {
-      let [fullMdLink, prefix, target] = mdLinkMatch;
-      const index = mdLinkMatch.index + prefix.length;
-      const lines = markdownFile.content.substring(0, index).split("\n");
-      const line = lines.length - 1;
-      const col = lines[line].length;
-
+    for (const { target, line, col } of getMarkdownLinks(
+      markdownFile.content
+    )) {
       const absoluteTarget = path.posix.normalize(
         path.posix.join(path.posix.dirname(markdownFile.path), target)
       );
@@ -289,6 +271,29 @@ function* handleSaveEvent(
     }
 
     lineNumber++;
+  }
+}
+
+function* getMarkdownLinks(fileContent: string | undefined) {
+  if (!fileContent) {
+    return;
+  }
+
+  mdLinkRegexGlobal.lastIndex = 0;
+  let mdLinkMatch: RegExpExecArray | null;
+  while ((mdLinkMatch = mdLinkRegexGlobal.exec(fileContent)) !== null) {
+    let [fullMdLink, prefix, target] = mdLinkMatch;
+    const index = mdLinkMatch.index + prefix.length;
+    const lines = fileContent.substring(0, index).split("\n");
+    const line = lines.length - 1;
+    const col = lines[line].length;
+
+    yield {
+      fullMdLink,
+      target,
+      line,
+      col,
+    };
   }
 }
 
