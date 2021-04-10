@@ -527,7 +527,7 @@ describe("pureGetEdits", () => {
             `),
           },
           {
-            path: "file-2.md",
+            path: "file-3.md",
             content: trimLines(`
               # Two links
               <img src="image.png" />
@@ -543,7 +543,7 @@ describe("pureGetEdits", () => {
           },
           {
             path: "folder/file-2.md",
-            range: "3:5-3:12",
+            range: "3:5-3:17",
             newText: "image.png",
           },
           {
