@@ -1,5 +1,10 @@
 # Change Log
 
+## [2.1.0]
+
+- Now auto updates src attributes in img tags, that link to local images.
+- Fix edge case where only one link updated if two or more links were on the same line.
+
 ## [2.0.3]
 
 - Convert Windows paths to POSIX and use `path.posix` everywhere, which might have fixed other Windows specific bugs.
