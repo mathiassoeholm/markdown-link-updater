@@ -260,42 +260,20 @@ function* handleSaveEvent(
 }
 
 function* getAllLinks(fileContent: string | undefined) {
-  yield* getMarkdownLinks(fileContent);
-  yield* getImgTags(fileContent);
+  yield* getMatchingLinks(mdLinkRegexGlobal, fileContent);
+  yield* getMatchingLinks(imgRegex, fileContent);
 }
 
-function* getMarkdownLinks(fileContent: string | undefined) {
+function* getMatchingLinks(regex: RegExp, fileContent: string | undefined) {
   if (!fileContent) {
     return;
   }
 
-  mdLinkRegexGlobal.lastIndex = 0;
-  let mdLinkMatch: RegExpExecArray | null;
-  while ((mdLinkMatch = mdLinkRegexGlobal.exec(fileContent)) !== null) {
-    let [fullMdLink, prefix, target] = mdLinkMatch;
-    const index = mdLinkMatch.index + prefix.length;
-    const lines = fileContent.substring(0, index).split("\n");
-    const line = lines.length - 1;
-    const col = lines[line].length;
-
-    yield {
-      target,
-      line,
-      col,
-    };
-  }
-}
-
-function* getImgTags(fileContent: string | undefined) {
-  if (!fileContent) {
-    return;
-  }
-
-  imgRegex.lastIndex = 0;
-  let imgMatch: RegExpExecArray | null;
-  while ((imgMatch = imgRegex.exec(fileContent)) !== null) {
-    const [fullMatch, prefix, target] = imgMatch;
-    const index = imgMatch.index + prefix.length;
+  regex.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(fileContent)) !== null) {
+    const [_, prefix, target] = match;
+    const index = match.index + prefix.length;
     const lines = fileContent.substring(0, index).split("\n");
     const line = lines.length - 1;
     const col = lines[line].length;
