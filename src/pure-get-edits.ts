@@ -272,7 +272,8 @@ function* getMatchingLinks(regex: RegExp, fileContent: string | undefined) {
   regex.lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(fileContent)) !== null) {
-    const [_, prefix, target] = match;
+    let [_, prefix, target] = match;
+    target = windowsToPosix(target);
     const index = match.index + prefix.length;
     const lines = fileContent.substring(0, index).split("\n");
     const line = lines.length - 1;
