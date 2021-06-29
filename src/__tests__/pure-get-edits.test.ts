@@ -598,6 +598,28 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("handles markdown links with windows style paths", () => {
+      testRename({
+        payload: {
+          pathBefore: "sub/test.gif",
+          pathAfter: "sub/test1.gif",
+        },
+        markdownFiles: [
+          {
+            path: "README.md",
+            content: "![](sub\\test.gif)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "README.md",
+            range: "0:4-0:16",
+            newText: "sub/test1.gif",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {
