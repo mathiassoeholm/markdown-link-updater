@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.1]
+
+- Fix bug where path was not updated if the path contained a backslash. Thanks to Higurashi-kagome.
+
 ## [2.1.0]
 
 - Now auto updates src attributes in img tags, that link to local images.
