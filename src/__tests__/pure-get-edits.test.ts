@@ -225,7 +225,7 @@ describe("pureGetEdits", () => {
             path: "my/workspace/file-1.md",
             content: trimLines(`
               [link-1](before/1.txt)
-              [link-2](before/2.txt)
+              [link-2](Before/2.txt)
               [link-3](before/sub/3.txt)
             `),
           },
@@ -616,6 +616,28 @@ describe("pureGetEdits", () => {
             path: "README.md",
             range: "0:4-0:16",
             newText: "sub/test1.gif",
+          },
+        ],
+      });
+    });
+
+    it("handles markdown links with different casing", () => {
+      testRename({
+        payload: {
+          pathBefore: "Assets/img.png",
+          pathAfter: "Assets/image.png",
+        },
+        markdownFiles: [
+          {
+            path: "README.md",
+            content: "![](assets/iMg.pNg)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "README.md",
+            range: "0:4-0:18",
+            newText: "Assets/image.png",
           },
         ],
       });

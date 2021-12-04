@@ -129,11 +129,12 @@ function* handleRenameEvent(
         path.posix.join(path.posix.dirname(markdownFile.path), target)
       );
 
-      const isLinkToFileInRenamedFolder = absoluteTarget.startsWith(
-        pathBefore + path.posix.sep
-      );
+      const isLinkToFileInRenamedFolder = absoluteTarget
+        .toLowerCase()
+        .startsWith(pathBefore.toLowerCase() + path.posix.sep);
 
-      const isLinkToMovedFile = absoluteTarget === pathBefore;
+      const isLinkToMovedFile =
+        absoluteTarget.toLowerCase() === pathBefore.toLowerCase();
 
       if (isLinkToMovedFile) {
         const newLink = path.posix.normalize(
