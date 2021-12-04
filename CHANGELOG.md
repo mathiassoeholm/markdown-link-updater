@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.2]
+
+- Make path comparison case insensitive, so casing for the links doesn't matter.
+
 ## [2.1.1]
 
 - Fix bug where path was not updated if the path contained a backslash. Thanks to Higurashi-kagome.
