@@ -1,4 +1,4 @@
-name: Continuous Integration
+name: Main
 
 on:
   pull_request:
@@ -16,3 +16,11 @@ jobs:
       - uses: actions/checkout@main
       - uses: bahmutov/npm-install@v1
       - run: yarn test
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    steps:
+      - run: echo "Work in progress"
