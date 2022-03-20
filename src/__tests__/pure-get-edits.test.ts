@@ -642,6 +642,36 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("can update two links on the same line", () => {
+      testRename({
+        payload: {
+          pathBefore: "file-1.md",
+          pathAfter: "sub/file-1.md",
+        },
+        markdownFiles: [
+          {
+            path: "sub/file-1.md",
+            content: "[file-2](file-2.md) [file-3](file-3.md)",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "sub/file-1.md",
+            range: "0:9-0:18",
+            newText: "../file-2.md",
+            requiresPathToExist: "file-2.md",
+          },
+          {
+            path: "sub/file-1.md",
+            // Range gets pushed by three columns because of added "../" in the first link
+            range: "0:32-0:41",
+            newText: "../file-3.md",
+            requiresPathToExist: "file-3.md",
+          },
+        ],
+      });
+    });
   });
 
   describe("save", () => {
