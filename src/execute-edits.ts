@@ -19,8 +19,19 @@ async function executeEdits(edits: Edit[]) {
       : "Yes";
 
   if (shouldExecute === "Yes") {
-    for (const edit of edits) {
-      await executeEdit(edit);
+    const editsByPath = edits.reduce(
+      (editsByPath: { [_: string]: Edit[] }, edit) => ({
+        ...editsByPath,
+        [edit.path]: [...(editsByPath[edit.path] || []), edit],
+      }),
+      {}
+    );
+
+    for (const edits of Object.values(editsByPath)) {
+      const lineOffsets = {} as { [_: number]: number };
+      for (const edit of edits) {
+        await executeEdit(edit, lineOffsets);
+      }
     }
 
     if (edits.length > 1) {
@@ -33,14 +44,25 @@ async function executeEdits(edits: Edit[]) {
   }
 }
 
-async function executeEdit(edit: Edit) {
+async function executeEdit(
+  { range: { start, end }, path, newText }: Edit,
+  lineOffsets: { [_: number]: number }
+) {
   const workspaceEdit = new WorkspaceEdit();
+
+  let offset = 0;
+  if (start.line === end.line) {
+    offset = lineOffsets[start.line] || 0;
+    lineOffsets[start.line] =
+      offset + newText.length - (end.character - start.character);
+  }
+
   const range = new Range(
-    new Position(edit.range.start.line, edit.range.start.character),
-    new Position(edit.range.end.line, edit.range.end.character)
+    new Position(start.line, start.character + offset),
+    new Position(end.line, end.character + offset)
   );
 
-  workspaceEdit.replace(Uri.file(edit.path), range, edit.newText);
+  workspaceEdit.replace(Uri.file(path), range, newText);
 
   await workspace.applyEdit(workspaceEdit);
 }
