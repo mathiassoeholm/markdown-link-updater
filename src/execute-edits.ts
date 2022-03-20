@@ -1,6 +1,7 @@
 import { pathExistsSync } from "fs-extra";
 import { Position, Range, Uri, window, workspace, WorkspaceEdit } from "vscode";
 import { Edit } from "./models";
+import { config } from "./config";
 
 async function executeEdits(edits: Edit[]) {
   edits = edits.filter(
@@ -9,7 +10,7 @@ async function executeEdits(edits: Edit[]) {
   );
 
   const shouldExecute =
-    edits.length > 5
+    edits.length > 5 && !config.disableConfirmationPrompt
       ? await window.showInformationMessage(
           `Update ${edits.length} Markdown links?`,
           { modal: true },

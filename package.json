@@ -43,6 +43,11 @@
           "type": "array",
           "default": [],
           "description": "Array of glob patterns used to include specific folders and files. If the array is empty, everything will be included, unless specified by exclude."
+        },
+        "markdownLinkUpdater.disableConfirmationPrompt": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable confirmation prompt when updating a large number of links at once."
         }
       }
     }
