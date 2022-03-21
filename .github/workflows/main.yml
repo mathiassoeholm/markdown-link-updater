@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: main
+    tags:
+      - "v*"
 
 jobs:
   test:
@@ -34,7 +36,23 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
-    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
     steps:
-      - run: echo "Work in progress"
+      # Make sure we don't forget to change version in package.json
+      - uses: geritol/match-tag-to-package-version@0.2.0
+        with:
+          TAG_PREFIX: v
+      - uses: actions/download-artifact@v3
+        with:
+          name: vsix
+      # Release on Visual Studio Marketplace
+      - run: npx vsce publish --packagePath extension.vsix -p ${{ secrets.VSCE_TOKEN }}
+      # Release on Open VSX
+      - run: npx ovsx publish --packagePath extension.vsix -p ${{ secrets.OVSX_TOKEN }}
+      # Create a release on Github
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "extension.vsix"
+          body: See [CHANGELOG](https://github.com/mathiassoeholm/markdown-link-updater/blob/main/CHANGELOG.md) for details.
+          token: ${{ secrets.GITHUB_TOKEN }}
