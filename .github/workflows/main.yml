@@ -39,6 +39,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     steps:
+      - uses: actions/checkout@main
       # Make sure we don't forget to change version in package.json
       - uses: geritol/match-tag-to-package-version@0.2.0
         with:
