@@ -17,6 +17,20 @@ jobs:
       - uses: bahmutov/npm-install@v1
       - run: yarn test
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@main
+      - uses: bahmutov/npm-install@v1
+      - run: yarn compile
+      - run: npx vsce package -o extension.vsix
+      - uses: actions/upload-artifact@v3
+        with:
+          name: vsix
+          path: extension.vsix
+
   release:
     name: Release
     runs-on: ubuntu-latest
