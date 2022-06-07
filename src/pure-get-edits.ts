@@ -90,7 +90,8 @@ function* handleRenameEvent(
     (file) => path.posix.normalize(file.path) === pathAfter
   )?.content;
 
-  for (const { target, line, col } of getAllLinks(fileContent)) {
+  let prevLine: number = -1, offset: number = 0;
+  for (let { target, line, col } of getAllLinks(fileContent)) {
     const absoluteTarget = path.posix.join(
       path.posix.dirname(pathBefore),
       target
@@ -105,6 +106,14 @@ function* handleRenameEvent(
     if (targetIsUnmodified) {
       continue;
     }
+
+    if (prevLine === line) {
+        offset += (newLink.length - target.length);
+        col += offset;
+    } else{
+        offset = 0;
+    }
+    prevLine = line;
 
     yield {
       path: pathAfter,
@@ -124,7 +133,8 @@ function* handleRenameEvent(
   }
 
   for (const markdownFile of markdownFiles) {
-    for (const { target, line, col } of getAllLinks(markdownFile.content)) {
+    let prevLine: number = -1, offset: number = 0;
+    for (let { target, line, col } of getAllLinks(markdownFile.content)) {
       const absoluteTarget = path.posix.normalize(
         path.posix.join(path.posix.dirname(markdownFile.path), target)
       );
@@ -140,6 +150,14 @@ function* handleRenameEvent(
         const newLink = path.posix.normalize(
           path.posix.relative(path.posix.dirname(markdownFile.path), pathAfter)
         );
+
+        if (prevLine === line) {
+            offset += (newLink.length - target.length);
+            col += offset;
+        } else{
+            offset = 0;
+        }
+        prevLine = line;
 
         yield {
           path: markdownFile.path,
@@ -164,6 +182,14 @@ function* handleRenameEvent(
           path.posix.dirname(markdownFile.path),
           newAbsoluteTarget
         );
+
+        if (prevLine === line) {
+            offset += (newLink.length - target.length);
+            col += offset;
+        } else{
+            offset = 0;
+        }
+        prevLine = line;
 
         yield {
           path: markdownFile.path,
