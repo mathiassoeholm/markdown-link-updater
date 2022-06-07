@@ -497,7 +497,7 @@ describe("pureGetEdits", () => {
           },
           {
             path: "folder/file.md",
-            range: "0:22-0:30",
+            range: "0:25-0:33",
             newText: "../img2.png",
             requiresPathToExist: "img2.png",
           },
@@ -585,7 +585,7 @@ describe("pureGetEdits", () => {
           },
           {
             path: "file.md",
-            range: "1:32-1:40",
+            range: "1:39-1:47",
             newText: "folder/img2.jpg",
             requiresPathToExist: "folder/img2.jpg",
           },
@@ -641,6 +641,36 @@ describe("pureGetEdits", () => {
           },
         ],
       });
+    });
+
+    it("can update two links on the same line", () => {
+        testRename({
+            payload: {
+                pathBefore: "file-1.md",
+                pathAfter: "sub/file-1.md",
+            },
+            markdownFiles: [
+            {
+                path: "sub/file-1.md",
+                content: "[file-2](file-2.md) [file-3](file-3.md)",
+            },
+            ],
+            expectedEdits: [
+            {
+                path: "sub/file-1.md",
+                range: "0:9-0:18",
+                newText: "../file-2.md",
+                requiresPathToExist: "file-2.md",
+            },
+            {
+                path: "sub/file-1.md",
+                // Range gets pushed by three columns because of added "../" in the first link
+                range: "0:32-0:41",
+                newText: "../file-3.md",
+                requiresPathToExist: "file-3.md",
+            },
+            ],
+        });
     });
   });
 
