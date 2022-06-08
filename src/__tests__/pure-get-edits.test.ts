@@ -643,33 +643,63 @@ describe("pureGetEdits", () => {
       });
     });
 
-    it("can update two links on the same line", () => {
+    it("can update two links on the same line(caused by moving file)", () => {
         testRename({
             payload: {
                 pathBefore: "file-1.md",
                 pathAfter: "sub/file-1.md",
             },
             markdownFiles: [
-            {
-                path: "sub/file-1.md",
-                content: "[file-2](file-2.md) [file-3](file-3.md)",
-            },
+              {
+                  path: "sub/file-1.md",
+                  content: "[file-2](file-2.md) [file-3](file-3.md)",
+              },
             ],
             expectedEdits: [
-            {
-                path: "sub/file-1.md",
-                range: "0:9-0:18",
-                newText: "../file-2.md",
-                requiresPathToExist: "file-2.md",
-            },
-            {
-                path: "sub/file-1.md",
-                // Range gets pushed by three columns because of added "../" in the first link
-                range: "0:32-0:41",
-                newText: "../file-3.md",
-                requiresPathToExist: "file-3.md",
-            },
+              {
+                  path: "sub/file-1.md",
+                  range: "0:9-0:18",
+                  newText: "../file-2.md",
+                  requiresPathToExist: "file-2.md",
+              },
+              {
+                  path: "sub/file-1.md",
+                  // Range gets pushed by three columns because of added "../" in the first link
+                  range: "0:32-0:41",
+                  newText: "../file-3.md",
+                  requiresPathToExist: "file-3.md",
+              },
             ],
+        });
+    });
+
+    it("can update two links on the same line(caused by renaming folder)", () => {
+        testRename({
+          payload: {
+            pathBefore: "my/workspace/before",
+            pathAfter: "my/workspace/after",
+          },
+          markdownFiles: [
+            {
+              path: "my/workspace/file-1.md",
+              content: "[link-1](before/1.txt) [link-2](Before/2.txt)",
+            },
+          ],
+          workspacePath: "my/workspace/",
+          expectedEdits: [
+            {
+              path: "my/workspace/file-1.md",
+              range: "0:9-0:21",
+              newText: "after/1.txt",
+              requiresPathToExist: "my/workspace/after/1.txt",
+            },
+            {
+              path: "my/workspace/file-1.md",
+              range: "0:31-0:43",
+              newText: "after/2.txt",
+              requiresPathToExist: "my/workspace/after/2.txt",
+            },
+          ],
         });
     });
   });
