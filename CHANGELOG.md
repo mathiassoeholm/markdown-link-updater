@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.1.3]
+
+- Fix bug where it would mangle the links if multiple links were renamed on the same line. Thanks to Higurashi-kagome.
+
 ## [2.1.2]
 
 - Make path comparison case insensitive, so casing for the links doesn't matter.
