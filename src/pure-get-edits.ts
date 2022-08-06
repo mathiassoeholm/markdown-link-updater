@@ -13,6 +13,8 @@ import {
 
 const mdLinkRegex = /\[([^\]]*)\]\(([^\)]+)\)/;
 const mdLinkRegexGlobal = /(\[[^\]]*\]\()([^\)]+?)(#[^\s\/]+)?\)/gm;
+const mdLinkRegexInAngleBrackesGlobal =
+  /(\[[^\]]*\]\(<)([^\)]+?)>(#[^\s\/]+)?\)/gm;
 const imgRegex = /(<img\s[^>]*?src\s*=\s*['\"])([^'\"]*?)['\"][^>]*?>/gm;
 
 interface Options {
@@ -90,7 +92,8 @@ function* handleRenameEvent(
     (file) => path.posix.normalize(file.path) === pathAfter
   )?.content;
 
-  let prevLine: number = -1, offset: number = 0;
+  let prevLine: number = -1,
+    offset: number = 0;
   for (let { target, line, col } of getAllLinks(fileContent)) {
     const absoluteTarget = path.posix.join(
       path.posix.dirname(pathBefore),
@@ -108,10 +111,10 @@ function* handleRenameEvent(
     }
 
     if (prevLine === line) {
-        offset += (newLink.length - target.length);
-        col += offset;
-    } else{
-        offset = 0;
+      offset += newLink.length - target.length;
+      col += offset;
+    } else {
+      offset = 0;
     }
     prevLine = line;
 
@@ -133,7 +136,8 @@ function* handleRenameEvent(
   }
 
   for (const markdownFile of markdownFiles) {
-    let prevLine: number = -1, offset: number = 0;
+    let prevLine: number = -1,
+      offset: number = 0;
     for (let { target, line, col } of getAllLinks(markdownFile.content)) {
       const absoluteTarget = path.posix.normalize(
         path.posix.join(path.posix.dirname(markdownFile.path), target)
@@ -152,10 +156,10 @@ function* handleRenameEvent(
         );
 
         if (prevLine === line) {
-            offset += (newLink.length - target.length);
-            col += offset;
-        } else{
-            offset = 0;
+          offset += newLink.length - target.length;
+          col += offset;
+        } else {
+          offset = 0;
         }
         prevLine = line;
 
@@ -184,10 +188,10 @@ function* handleRenameEvent(
         );
 
         if (prevLine === line) {
-            offset += (newLink.length - target.length);
-            col += offset;
-        } else{
-            offset = 0;
+          offset += newLink.length - target.length;
+          col += offset;
+        } else {
+          offset = 0;
         }
         prevLine = line;
 
@@ -287,6 +291,7 @@ function* handleSaveEvent(
 }
 
 function* getAllLinks(fileContent: string | undefined) {
+  yield* getMatchingLinks(mdLinkRegexInAngleBrackesGlobal, fileContent);
   yield* getMatchingLinks(mdLinkRegexGlobal, fileContent);
   yield* getMatchingLinks(imgRegex, fileContent);
 }
