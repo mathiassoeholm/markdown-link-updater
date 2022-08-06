@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.2.0]
+
+- Add support for links inside angle brackets [#25](https://github.com/mathiassoeholm/markdown-link-updater/issues/25).
+
 ## [2.1.3]
 
 - Fix bug where it would mangle the links if multiple links were renamed on the same line. Thanks to Higurashi-kagome.
