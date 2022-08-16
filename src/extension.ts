@@ -10,12 +10,12 @@ function activate(context: ExtensionContext) {
 
   const getMarkdownFiles = async () => {
     return await Promise.all(
-      (await workspace.findFiles("**/*.md", config.exclude.join(","))).map(
-        async (f) => ({
-          path: f.fsPath,
-          content: await fs.readFile(f.fsPath, "utf-8"),
-        })
-      )
+      (
+        await workspace.findFiles("**/*.{md,mdx}", config.exclude.join(","))
+      ).map(async (f) => ({
+        path: f.fsPath,
+        content: await fs.readFile(f.fsPath, "utf-8"),
+      }))
     );
   };
 
@@ -39,7 +39,10 @@ function activate(context: ExtensionContext) {
   });
 
   const onWillSaveDisposable = workspace.onWillSaveTextDocument(async (e) => {
-    if (e.document.fileName.endsWith(".md")) {
+    if (
+      e.document.fileName.endsWith(".md") ||
+      e.document.fileName.endsWith(".mdx")
+    ) {
       const contentBefore = await fs.readFile(e.document.fileName, "utf-8");
 
       payloads.push({
