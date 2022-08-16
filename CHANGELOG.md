@@ -1,5 +1,9 @@
 # Change Log
 
+## [2.3.0]
+
+- Add support for .mdx files [#22](https://github.com/mathiassoeholm/markdown-link-updater/issues/25).
+
 ## [2.2.0]
 
 - Add support for links inside angle brackets [#25](https://github.com/mathiassoeholm/markdown-link-updater/issues/25).
