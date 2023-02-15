@@ -117,6 +117,34 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("updates files linking to the renamed file in another path on the same level", () => {
+      testRename({
+        payload: {
+          pathBefore: "folder2/file-2.md",
+          pathAfter: "folder2/new-name.md",
+        },
+        markdownFiles: [
+          {
+            path: "folder1/file-1.md",
+            content:
+              "# File 1\na link [link to file-2](../folder2/file-2.md) is here",
+          },
+          {
+            path: "folder2/new-name.md",
+            content: "# Just some markdown file",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "folder1/file-1.md",
+            range: "1:24-1:44",
+            newText: "../folder2/new-name.md",
+          },
+        ],
+      });
+    });
+
     it("can update multiple links in the same file", () => {
       testRename({
         payload: {
