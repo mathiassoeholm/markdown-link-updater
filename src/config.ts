@@ -13,6 +13,9 @@ const config = {
   get include() {
     return getConfig().get<string[]>("include", []);
   },
+  get disableConfirmationPrompt() {
+    return getConfig().get<boolean>("disableConfirmationPrompt", false);
+  },
 };
 
 function getOptions(targetFile: Path): Options {
