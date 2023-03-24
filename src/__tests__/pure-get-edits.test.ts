@@ -752,6 +752,34 @@ describe("pureGetEdits", () => {
         ],
       });
     });
+
+    it("updates files linking to a section in the moved file in a table", () => {
+      testRename({
+        payload: {
+          pathBefore: "folder/file-2.md",
+          pathAfter: "folder/newfolder/file-2.md",
+        },
+        markdownFiles: [
+          {
+            path: "file-1.md",
+            content:
+              "# File 1\n| a link [link to file-2](folder/file-2.md#heading) | is \"here\" |",
+          },
+          {
+            path: "folder/newfolder/file-2.md",
+            content: "# Just some markdown file\n## Heading",
+          },
+        ],
+        expectedEdits: [
+          {
+            path: "file-1.md",
+            range: "1:26-1:50",
+            newText: "folder/newfolder/file-2.md#heading",
+          },
+        ],
+      });
+    });
+
   });
 
   describe("save", () => {
